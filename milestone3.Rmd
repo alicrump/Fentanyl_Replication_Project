@@ -1,0 +1,14 @@
+---
+title: "Milestone 3"
+author: "Ali Crump"
+date: "2/21/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This paper explores fentanyl seizures and deaths in the United States from 2011-2017, namely the increases of both. Zoorob uses two models; Model 1 shows that fentanyl exposure has a positive association with mortality rates, and Model 2 tries to estimate the causal effect of fentanyl exposure on mortality rates. Findings in the paper show that much of the variation in the increased overdose mortality is explained by fentanyl exposure, and that fentanyl deaths are highly correlated with geography, as the epicenter of the overdose crisis has shifted towards the eastern U.S. In my paper I'm going to run the same regression analysis and compare my results to Zoorob's. I'm not sure of what extension I will be doing yet-- will set up a meeting with Alice to discuss this.
+
+My Github repository can be found [here](https://github.com/alicrump/Fentanyl_Replication_Project).
