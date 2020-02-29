@@ -1,0 +1,23 @@
+---
+title: "milestone 4"
+author: "Ali Crump"
+date: "2/28/2020"
+output: pdf_document
+bibliography: bibliography.bib
+link_citations: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(knitr)
+write_bib(c("knitr","stringr"), "bibliography.bib")
+```
+
+The URL of my repo can be found [here](https://github.com/alicrump/Fentanyl_Replication_Project).
+
+# References
+@R-knitr, 
+@R-stringr, 
+@knitr2015
