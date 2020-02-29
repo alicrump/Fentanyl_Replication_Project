@@ -10,6 +10,8 @@ link_citations: true
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 
+# Loaded necessary libraries and created a bibliography file.
+
 library(tidyverse)
 library(knitr)
 library(gt)
@@ -31,6 +33,8 @@ fake <- tibble(age,weight, delta)
 
 ```
 ```{r}
+# Making the gt table of my fake data
+
 table <- 
   fake %>% 
   slice(1:10) %>% 
@@ -42,12 +46,18 @@ table <-
 
 table
 ```
+
 ```{r}
-m1 <- lm(delta~age, data = fake)
+# Making a model for my fake data
+
 m2 <- lm(delta~age + weight, data = fake)
 ```
 
 ```{r regression table, results="asis",warning=FALSE}
+# Set warning = FALSE because couldn't find an answer online to my error. Error
+# was "length of NULL channot be changed" and can't seem to fix it. My table 
+# shows up fine when I knit.
+
 stargazer(m2, type = 'latex')
 
 ```
