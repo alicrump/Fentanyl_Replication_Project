@@ -1,0 +1,49 @@
+---
+title: "Milestone 5"
+author: "Ali Crump"
+date: "3/30/2020"
+output: pdf_document
+bibliography: bibliography.bib
+link_citations: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(tidyverse)
+library(knitr)
+
+```
+
+### 1.  
+
+More information on this project can be found on my Github repository.^[[Github repository](https://github.com/alicrump/Fentanyl_Replication_Project)]
+
+### 2.  
+
+### 3.  
+See References.
+
+### 4.  
+
+This paper explores fentanyl seizures and deaths in the United States from 2011-2017, namely the increases of both. Zoorob uses two models; Model 1 shows that fentanyl exposure has a positive association with mortality rates, and Model 2 tries to estimate the causal effect of fentanyl exposure on mortality rates. 
+
+Zoorob runs a least squares regression for the first model. The model predicts overdose mortality as a function of fentanyl exposure. Fentanyl exposure takes into account the state, year, the natural logarithm of the number of test results containing fentanyl (in that state and year), and an error term. The standard errors are two-way clustered by state and year and includes population weights (@Paper). 
+
+![](images/model1.png)
+
+The second model uses a two-stage least squares regression:
+
+![](images/model2.png)
+
+Findings in the paper show that much of the variation in the increased overdose mortality is explained by fentanyl exposure, and that fentanyl deaths are highly correlated with geography, as the epicenter of the overdose crisis has shifted towards the eastern U.S. They also found that longitude is better able to explain levels of overdose mortality over time. States east of the Mississippi River tend to have greater fentanyl exposure and sharper increases in overdose deaths than states west of the Mississippi River (@Paper). Zoorob also uses both models to estimate the number or overdose deaths attributable to fentanyl and claims that they are broadly consistent with official mortality statistics. For my replication paper I am going to run the same statistical analyses and compare the results.
+
+### 5.  
+##### Appendix  
+
+### References 
+@Replication, 
+@Paper,
+@King,
+@knitr2015,
+@knitr2014

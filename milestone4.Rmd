@@ -18,6 +18,7 @@ library(gt)
 library(stargazer)
 
 write_bib(c("knitr","stringr"), "bibliography.bib")
+
 ```
 
 More information on this project can be found on my Github repository.^[[Github repository](https://github.com/alicrump/Fentanyl_Replication_Project)]
@@ -63,6 +64,6 @@ stargazer(m2, type = 'latex')
 ```
 
 # References
-@R-knitr, 
-@R-stringr, 
+@Replication, 
+@Paper, 
 @knitr2015
