@@ -180,6 +180,23 @@ state_overdose <- read_csv("nflis_dataverse/state_od_19992016_pop.csv", col_type
 ))
 ```
 
+```{r}
+east <- c("Wisconsin","Illinois","Indiana","Kentucky","Tennessee","Mississippi","Michigan","Ohio","West Virginia","North Carolina","Alabama","Pennsylvania","Virginia","South Carolina","Georgia","Vermont","New York","New Jersey","Maryland","District of Columbia","Florida","New Hampshire","Massachussetts","Connecticut","Delaware","Maine","Rhode Island")
+
+overdose %>% 
+  filter(!(State %in% c("Alaska","Hawaii"))) %>% 
+  mutate(coast = ifelse(State %in% east, "East","West")) %>% 
+  group_by(Year, coast) %>% 
+  mutate(avg = mean(Age.Adjusted.Rate)) %>% 
+  drop_na() %>% 
+  ggplot(aes(x = Year, y = avg, color = coast)) +
+  geom_point() +
+  theme_bw() +
+  labs(x = "Year", y = "Rate / 100k", title = "Fentanyl Surge 2006-2016", subtitle = "States East of Mississippi Seeing Larger Increases in Overdose Death Rates on Average", caption = "Data from https://doi.org/10.7910/DVN/8FWVFK as part of a replication
+  project on 'Fentanyl shock: The changing geography of overdose in the
+  United States' by Michael Zoorob.", color = "Coast")
+```
+
 
 ### 3.  
 See References.
