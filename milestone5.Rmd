@@ -19,7 +19,167 @@ library(knitr)
 
 More information on this project can be found on my Github repository.^[[Github repository](https://github.com/alicrump/Fentanyl_Replication_Project)]
 
-### 2.  
+### 2.
+
+```{r}
+poison_multiple <- read_csv("nflis_dataverse/drugpoisonings_multiplecausesofdeath_stateyear_19992017pop.csv", col_types = cols(State = col_character(),
+   Year = col_double(),
+   Deaths = col_double(),
+   Population = col_double(),
+   `Crude Rate` = col_double(),
+   `Age Adjusted Rate` = col_double()
+ ))
+poison_underlying <- read_csv("nflis_dataverse/drugpoisonings_underlyingcauseofdeath_stateyear_19992017pop.csv", col_types = cols(
+   State = col_character(),
+   Year = col_double(),
+   Deaths = col_double(),
+   Population = col_double(),
+   `Crude Rate` = col_character(),
+   `Age Adjusted Rate` = col_character()
+ ))
+ 
+ fent2017nflis <- read_csv("nflis_dataverse/fent2017nflis.csv",col_types = cols(
+   .default = col_double(),
+   State = col_character()
+ ))
+```
+
+```{r}
+FOIA01_05 <- read_delim("nflis_dataverse/FOIA_ItemLevelData_2001_2005.txt", delim = ",", col_types = cols(
+   .default = col_logical(),
+   State = col_character(),
+   NFLISID = col_double(),
+   AnalysisID = col_double(),
+   SubmitDate = col_character(),
+   Color = col_character(),
+   Form = col_character(),
+   Quantity = col_double(),
+   Units = col_character(),
+   Subst1 = col_character(),
+   Subst2 = col_character(),
+   Subst3 = col_character(),
+   Subst4 = col_character(),
+   Subst5 = col_character(),
+   Subst6 = col_character(),
+   Subst7 = col_character(),
+   Subst8 = col_character(),
+   `PACKAGING/MARKINGS` = col_character(),
+   `How Acquired` = col_character(),
+   Purity = col_character(),
+   Origin = col_character(),
+   Manufacturer = col_character()
+ ))
+```
+
+```{r}
+FOIA06_10 <- read_delim("nflis_dataverse/FOIA_ItemLevelData_20062010.txt", delim = ",", col_names = c("state", "nflis_id","analysis_id","submit_date","how_acquired","color","form","quantity","units","subst1","subst2","subst3","subst4","subst5","subst6","subst7","subst8","purity","origin","manufacturer","packaging"), col_types = 
+                          cols(.default = col_logical(),
+   state = col_character(),
+   nflis_id = col_double(),
+   analysis_id = col_double(),
+   submit_date = col_character(),
+   color = col_character(),
+   form = col_character(),
+   quantity = col_double(),
+   units = col_character(),
+   subst1 = col_character(),
+   subst2 = col_character(),
+   subst3 = col_character(),
+   subst4 = col_character(),
+   subst5 = col_character(),
+   subst6 = col_character(),
+   subst7 = col_character(),
+   subst8 = col_character(),
+   packaging = col_character(),
+   how_acquired = col_character(),
+   purity = col_character(),
+   origin = col_character(),
+   manufacturer = col_character()
+ ))
+```
+
+
+```{r}
+FOIA11_16 <- read_delim("nflis_dataverse/FOIA_ItemLevelData_20112016.txt", delim = ",", col_names = c("state", "nflis_id","analysis_id","submit_date","how_acquired","color","form","quantity","units","subst1","subst2","subst3","subst4","subst5","subst6","subst7","subst8","purity","origin","manufacturer","packaging"), col_types = cols(.default = col_logical(),
+   state = col_character(),
+   nflis_id = col_double(),
+   analysis_id = col_double(),
+   submit_date = col_character(),
+   color = col_character(),
+   form = col_character(),
+   quantity = col_double(),
+   units = col_character(),
+   subst1 = col_character(),
+   subst2 = col_character(),
+   subst3 = col_character(),
+   subst4 = col_character(),
+   subst5 = col_character(),
+   subst6 = col_character(),
+   subst7 = col_character(),
+   subst8 = col_character(),
+   packaging = col_character(),
+   how_acquired = col_character(),
+   purity = col_character(),
+   origin = col_character(),
+   manufacturer = col_character()
+ ))
+```
+
+```{r}
+FOIA11_16_State <- read_delim("nflis_dataverse/FOIA_StateLevelData_20112016.txt", delim = ",", col_types = cols(
+   State = col_character(),
+   CaseReceived_Year = col_double(),
+   CaseReceived_Month = col_double(),
+   CountOfReportedResult = col_double(),
+   Subst1 = col_character(),
+   Subst2 = col_character(),
+   Subst3 = col_character(),
+   Subst4 = col_character(),
+   Subst5 = col_character(),
+   Subst6 = col_character(),
+   Subst7 = col_character(),
+   Subst8 = col_character(),
+   SumOfReportedQuantity = col_double(),
+   Units = col_character(),
+   `How Acquired` = col_character(),
+   Color = col_character(),
+   Form = col_character(),
+   AveragePurity = col_double()
+ ))
+```
+
+
+```{r}
+heroin <- read_csv("nflis_dataverse/heroin2017nflis.csv", col_types = cols(
+ State = col_character(),
+ Heroin = col_double(),
+ Year = col_double()
+))
+
+latlon <- read_csv("nflis_dataverse/latlon.csv", col_types = cols(
+ State = col_character(),
+ Latitude = col_double(),
+ Longitude = col_double()
+))
+
+overdose <- read_csv("nflis_dataverse/rx_od_state_0616.csv", col_types = cols(
+ State = col_character(),
+ Year = col_double(),
+ Rate = col_double(),
+ Age.Adjusted.Rate = col_double()
+))
+
+state_overdose <- read_csv("nflis_dataverse/state_od_19992016_pop.csv", col_types =
+                             cols(
+ State = col_character(),
+ Year = col_double(),
+ Deaths = col_double(),
+ Population = col_double(),
+ `Crude Rate` = col_double(),
+ `Age Adjusted Rate` = col_double()
+))
+```
+
 
 ### 3.  
 See References.
