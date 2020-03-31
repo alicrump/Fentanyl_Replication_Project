@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 library(tidyverse)
 library(knitr)
+library(lubridate)
 
 ```
 
@@ -180,6 +181,8 @@ state_overdose <- read_csv("nflis_dataverse/state_od_19992016_pop.csv", col_type
 ))
 ```
 
+There are so many different data files and I'm still sorting through them and trying to figure out how they are different and what each of them are measuring. That being said, I just made a graphic from the most straightforward data set I could find.
+
 ```{r}
 east <- c("Wisconsin","Illinois","Indiana","Kentucky","Tennessee","Mississippi","Michigan","Ohio","West Virginia","North Carolina","Alabama","Pennsylvania","Virginia","South Carolina","Georgia","Vermont","New York","New Jersey","Maryland","District of Columbia","Florida","New Hampshire","Massachussetts","Connecticut","Delaware","Maine","Rhode Island")
 
@@ -217,6 +220,66 @@ Findings in the paper show that much of the variation in the increased overdose 
 
 ### 5.  
 ##### Appendix  
+
+I can't do this all in 2 days just after the midterm. There are way too many sources of data and way too many creations of variables in several different data sets to keep track of. I have spent the entire day sorting through this code and trying to do the same as they did and will not finish this in time. This is the code I have so far- I did something wrong because propfent is 1 for every single row. I do not know what the error is and it will take be several days more to make sense of their variables.
+
+```{r}
+dat3 <- FOIA11_16 %>% 
+  mutate(fent = as.numeric(subst1 %in% c("Fentanyl","fentanyl","FENTANYL"))) %>% 
+  filter(fent >= 1) %>% 
+  mutate(date = mdy(submit_date)) %>% 
+  mutate(year = year(date))
+
+fentstateyear <- dat3 %>% 
+  group_by(state, year) %>% 
+  summarize(any = n(),
+            propfent = mean(fent),
+            sumfent = sum(fent))
+
+dat3o <- FOIA11_16_State %>% 
+  mutate(fent = as.numeric(Subst1 %in% c("Fentanyl","fentanyl","FENTANYL"))) %>% 
+  filter(fent >= 1) %>% 
+  mutate(year = as.numeric(CaseReceived_Year))
+
+fentstateyear2 <- dat3o %>% 
+  group_by(State, year) %>% 
+  summarize(any = sum(CountOfReportedResult),
+            propfent = mean(fent*CountOfReportedResult),
+            sumfent = sum(fent*CountOfReportedResult)) %>% 
+  mutate(state = State)
+
+presod <- overdose %>% 
+  mutate(state.abb = match(State,state.name)) %>% 
+  filter(State != "DC") %>% 
+  mutate(Age.Adjusted.Rate = NULL)
+
+fentstateyear_m <- rbind(fentstateyear, fentstateyear2)
+fentstateyear_m %>% 
+  group_by(state, year) %>% 
+  summarize(sumfent = sum(sumfent),
+            any = sum(any)) %>% 
+  mutate(propfent = sumfent/any)
+
+
+  
+```
+
+
+This is the code I am trying to run to make a table:
+
+
+stargazer(lm(fent_r~Longitude+Latitude+MORT_2013, data=presod_f[presod_f$Year==2013,]),
+          lm(fent_r~Longitude+Latitude+MORT_2013, data=presod_f[presod_f$Year==2014,]),
+          lm(fent_r~Longitude+Latitude+MORT_2013, data=presod_f[presod_f$Year==2015,]),
+          lm(fent_r~Longitude+Latitude+MORT_2013, data=presod_f[presod_f$Year==2016,]),
+          lm(fent_r~Longitude+Latitude+MORT_2013, data=presod_f[presod_f$Year==2017,]))
+
+To run this I need to read in several data sets, make several variables in each data set, then merge the data sets together into presod_f. The fent_r, longitude/latitude, MORT_2013, and year variables are all in different data sets. Once I am able to merge them all I will run this code.
+
+This is the table from the paper that I am trying to replicate:
+
+![](images/table1.png)
+
 
 ### References 
 @Replication, 
