@@ -20,15 +20,20 @@ library(stargazer)
 library(janitor)
 library(geofacet)
 library(lfe)
+library(rstanarm)
 ```
 
 ### Abstract
 
-Michael Zoorob’s “Fentanyl shock: The changing geography of overdose in the United States” (2019) shows that geography and fentanyl exposure explain much of the variation in increased overdose mortality rates between 2011 and 2017. This paper succeeds in replicating all of the figures and tables in Zoorob’s research with the exception of Table 2B, the total estimated deaths attributable to fentanyl by each model. The estimates from table in the original publication more closely match official mortality statistics than the ones replicated in this paper. In addition to replicating Zoorob’s work, the extension of this paper aims to improve the two-stage least squares regression analysis by performing a *TBD* alternative strategy to analyze the instrumental variables. In my analysis I find *X*, which matters because *Y*.
+Zoorob (2019) shows that geography and fentanyl exposure explain much of the variation in increased overdose mortality rates between 2011 and 2017. This paper succeeds in replicating all of the figures and tables in Zoorob’s research with the exception of Table 2B, the total estimated deaths attributable to fentanyl by each model. The estimates from table in the original publication more closely match official mortality statistics than the ones replicated in this paper. In addition to replicating Zoorob’s work, the extension of this paper aims to improve the two-stage least squares regression analysis by performing a *TBD* alternative strategy to analyze the instrumental variables. In my analysis I find *X*, which matters because *Y*.
 
 ### Introduction
 
-Zoorob uses two models; Model 1 shows that fentanyl exposure has a positive association with mortality rates, and Model 2 tries to estimate the causal effect of fentanyl exposure on mortality rates. Zoorob runs a least squares regression for the first model. The model predicts overdose mortality as a function of fentanyl exposure. Fentanyl exposure takes into account the state, year, the natural logarithm of the number of test results containing fentanyl (in that state and year), and an error term. The standard errors are two-way clustered by state and year and includes population weights (@Paper). 
+Zoorob uses two models; Model 1 shows that fentanyl exposure has a positive association with mortality rates, and Model 2 tries to estimate the causal effect of fentanyl exposure on mortality rates. Zoorob runs a least squares regression for the first model. The model predicts overdose mortality as a function of fentanyl exposure. Fentanyl exposure takes into account the state, year, an error term, and the natural logarithm of the number of test results containing fentanyl:
+
+$Fentanyl_{ij} = \log{(\frac{S_{ij}}{P_{ij}} + 1)}$
+
+Model 1 below is an ordinary least squares equation where $\alpha_{i}$ is state $i$ and $\eta_{j}$ is year $j$ The standard errors are two-way clustered by state and year and includes population weights (@Paper). 
 
 $Overdose_{ij} = \alpha_{i} + \eta_{j} + \beta_{1}Fentanyl_{ij} + \epsilon_{ij}$
 
@@ -56,7 +61,7 @@ Research by Barocas et al. on the effect of opiod use among patients with endoca
 Although in 2018, drug overdose deaths actually decreased by 4.6% from 2017 in the United States, fentanyl deaths continued to rise (@CDC)(@NYT). (Still looking for literature on this)
 
 
-```{r read data 1}
+```{r read data 1, cache=TRUE}
 poison_multiple <- read_csv("nflis_dataverse/drugpoisonings_multiplecausesofdeath_stateyear_19992017pop.csv", 
                             col_types = cols(State = col_character(),
                                              Year = col_double(),
@@ -68,7 +73,7 @@ poison_multiple <- read_csv("nflis_dataverse/drugpoisonings_multiplecausesofdeat
 ```
 
 
-```{r read data 2}
+```{r read data 2, cache=TRUE}
 poison_underlying <- read_csv("nflis_dataverse/drugpoisonings_underlyingcauseofdeath_stateyear_19992017pop.csv", 
                               col_types = cols(State = col_character(),
                                                Year = col_double(),
@@ -80,14 +85,14 @@ poison_underlying <- read_csv("nflis_dataverse/drugpoisonings_underlyingcauseofd
 ```
 
 
-```{r read data 3}
+```{r read data 3, cache=TRUE}
 fent2017nflis <- read_csv("nflis_dataverse/fent2017nflis.csv",
                           col_types = cols(.default = col_double(),
                                             State = col_character())) %>% 
                  clean_names()
 ```
 
-```{r read data 4}
+```{r read data 4, cache=TRUE}
 FOIA01_05 <- read_delim("nflis_dataverse/FOIA_ItemLevelData_2001_2005.txt", 
                         delim = ",", 
                         col_types = cols(.default = col_logical(),
@@ -115,7 +120,7 @@ FOIA01_05 <- read_delim("nflis_dataverse/FOIA_ItemLevelData_2001_2005.txt",
               clean_names()
 ```
 
-```{r read data 5}
+```{r read data 5, cache=TRUE}
 FOIA06_10 <- read_delim("nflis_dataverse/FOIA_ItemLevelData_20062010.txt",
                         delim = ",", 
                         col_names = c("state","nflis_id","analysis_id",
@@ -150,7 +155,7 @@ FOIA06_10 <- read_delim("nflis_dataverse/FOIA_ItemLevelData_20062010.txt",
 ```
 
 
-```{r read data 6}
+```{r read data 6, cache=TRUE}
 FOIA11_16 <- read_delim("nflis_dataverse/FOIA_ItemLevelData_20112016.txt",
                         delim = ",",
                         col_names = c("state","nflis_id","analysis_id",
@@ -184,7 +189,7 @@ FOIA11_16 <- read_delim("nflis_dataverse/FOIA_ItemLevelData_20112016.txt",
                        clean_names()
 ```
 
-```{r read data 7}
+```{r read data 7, cache=TRUE}
 FOIA11_16_State <- read_delim("nflis_dataverse/FOIA_StateLevelData_20112016.txt",
                               delim = ",", 
                               col_types = cols(State = col_character(),
@@ -209,7 +214,7 @@ FOIA11_16_State <- read_delim("nflis_dataverse/FOIA_StateLevelData_20112016.txt"
 ```
 
 
-```{r read data 8}
+```{r read data 8, cache=TRUE}
 heroin <- read_csv("nflis_dataverse/heroin2017nflis.csv", 
                    col_types = cols(State = col_character(),
                                     Heroin = col_double(),
@@ -218,7 +223,7 @@ heroin <- read_csv("nflis_dataverse/heroin2017nflis.csv",
 ```
 
 
-```{r read data 9}
+```{r read data 9, cache=TRUE}
 latlon <- read_csv("nflis_dataverse/latlon.csv", 
                    col_types = cols(State = col_character(),
                                     Latitude = col_double(),
@@ -227,7 +232,7 @@ latlon <- read_csv("nflis_dataverse/latlon.csv",
 ```
 
 
-```{r read data 10}
+```{r read data 10, cache=TRUE}
 overdose <- read_csv("nflis_dataverse/rx_od_state_0616.csv", 
                      col_types = cols(State = col_character(),
                                       Year = col_double(),
@@ -237,7 +242,7 @@ overdose <- read_csv("nflis_dataverse/rx_od_state_0616.csv",
 ```
 
 
-```{r read data 11}
+```{r read data 11, cache=TRUE}
 state_overdose <- read_csv("nflis_dataverse/state_od_19992016_pop.csv", 
                            col_types = cols(State = col_character(),
                                             Year = col_double(),
@@ -265,8 +270,10 @@ FOIA11_16$heroin = as.numeric(rowSums(`dim<-`(as.matrix(FOIA11_16) %in% c("Heroi
 FOIA11_16$date = mdy(FOIA11_16$submit_date)
 FOIA11_16$year = year(FOIA11_16$date)
 
-fentstateyear = FOIA11_16 %>% group_by(state, year) %>% summarize(any = n(), propfent = mean(fent),
-                                                  sumfent = sum(fent),sumheroin = sum(heroin))
+fentstateyear = FOIA11_16 %>%
+  group_by(state, year) %>%
+  summarize(any = n(), propfent = mean(fent),
+            sumfent = sum(fent),sumheroin = sum(heroin))
 
 # other states
 FOIA11_16_State$fent = as.numeric(rowSums(`dim<-`(as.matrix(FOIA11_16_State) %in% d, dim(FOIA11_16_State))) >= 1)
@@ -274,11 +281,12 @@ FOIA11_16_State$heroin = as.numeric(rowSums(`dim<-`(as.matrix(FOIA11_16_State) %
 #FOIA11_16_State$date = mdy(FOIA11_16_State$SubmitD1ate)
 FOIA11_16_State$year = as.numeric(FOIA11_16_State$case_received_year)
 
-fentstateyear2 = FOIA11_16_State %>% group_by(state, year) %>% summarize(any = sum(count_of_reported_result),
-                                                propfent = mean(fent*count_of_reported_result),
-                                                sumfent = sum(fent*count_of_reported_result),
-                                                sumheroin = sum(heroin*count_of_reported_result)
-                                                )
+fentstateyear2 = FOIA11_16_State %>% 
+  group_by(state, year) %>% 
+  summarize(any = sum(count_of_reported_result),
+            propfent = mean(fent*count_of_reported_result),
+            sumfent = sum(fent*count_of_reported_result),
+            sumheroin = sum(heroin*count_of_reported_result))
 
 overdose$ST = state.abb[match(overdose$state,state.name)]
 overdose[is.na(overdose$ST), "ST"] = "DC"
@@ -291,7 +299,9 @@ overdose$age_adjusted_rate = NULL
 ############ FIGURE 1
 
 # fentyear
-fentyear = fentstateyear %>% group_by(year) %>% summarize(sumfent = sum(sumfent))
+fentyear = fentstateyear %>% 
+  group_by(year) %>% 
+  summarize(sumfent = sum(sumfent))
 
 ### incorporate fentanyl from 2017
 fent2017nflis$ST = state.abb[match(fent2017nflis$state,state.name)]
@@ -300,9 +310,13 @@ fent2017nflis[is.na(fent2017nflis$ST), "ST"] = "DC"
 #
 
 fentyear = rbind(fentyear, c(2017, sum(fent2017nflis$allfent)))
-ggplot(fentyear, aes(factor(year), sumfent/1000, fill="Black")) + geom_col(fill="Black") + xlab("") +
-  ylab("Fentanyl Test Reports (Thousands) \n") + geom_text(aes(label=sumfent),hjust=0.5, vjust=-0.5, size=6) +
-  theme_classic() +  theme(legend.position="", axis.text=element_text(size=14), axis.title.y=element_text(size=14))
+ggplot(fentyear, aes(factor(year), sumfent/1000, fill="Black")) + 
+  geom_col(fill="Black") + 
+  xlab("") +
+  ylab("Fentanyl Test Reports (Thousands) \n") + 
+  geom_text(aes(label=sumfent),hjust=0.5, vjust=-0.5, size=6) +
+  theme_classic() +  
+  theme(legend.position="", axis.text=element_text(size=14), axis.title.y=element_text(size=14))
 # ggsave("Figures/Appendix/FIGUREA1_fentseizures_years.png.png", width=12, height=8, units="in", dpi=300)
 
 
@@ -391,40 +405,24 @@ presod_f$perheroin = presod_f$propheroin*100
 
 ### Appendix  
 
-```{r,fig.height=8, fig.width=12, dpi=300}
+```{r figure 1,fig.height=8, fig.width=12, dpi=300}
 ############################## FIGURE 2
-ggplot(presod_f, aes(x=year, 100*fentcapita, fill=tgroup)) + geom_col() + xlab("") +
-  ylab("Fentanyl/Analogues per 100k \n") + facet_geo(~state, scales="fixed") +
-  theme_bw() + theme(legend.position = "", plot.title = element_text(size=28), axis.text = element_text(size=7)) +
+ggplot(presod_f, aes(x=year, 100*fentcapita, fill=tgroup)) + 
+  geom_col() + 
+  xlab("") +
+  ylab("Fentanyl/Analogues per 100k \n") + 
+  facet_geo(~state, scales="fixed") +
+  theme_bw() + 
+  theme(legend.position = "", plot.title = element_text(size=28), axis.text = element_text(size=7)) +
   labs(caption = "Source: National Forensic Laboratory Information System (NFLIS)") +
   ggtitle("\n Drug Seizures with Fentanyl (2011-2017) \n") 
 # ggsave("Figures/Figure2/figure2_fentcapita_17.png", width=12, height=8, units="in", dpi=300)
 ```
 
 
-```{r,fig.height=8, fig.width=12, dpi=300, include = FALSE, echo = FALSE}
-### plot seizures count
-ggplot(fentstateyear_m, aes(x=year, sumfent, fill=state)) + geom_col() + xlab("") +
-  ylab("Tests Containing Fentanyl/Analogues \n") + facet_geo(~state, scales="fixed") +
-  theme_bw() + theme(legend.position = "", plot.title = element_text(size=28), axis.text = element_text(size=7)) +
-  labs(caption = "Source: National Forensic Laboratory Information System (NFLIS)") +
-  ggtitle("\n Drug Seizures with Fentanyl (2011-2017) \n") 
-# ggsave("Figures/Figure2S/fentseizures.png", width=12, height=8, units="in", dpi=300)
+tables 2a 2b
 
-### plot proportion of all drug seizures containing fentanyl 
-ggplot(fentstateyear_m, aes(x=year, propfent, fill=state)) + geom_col() + xlab("") +
-  ylab("Proportion of Tests Containing Fentanyl/Analogues \n") + facet_geo(~state, scales="fixed") +
-  theme_bw() + theme(legend.position = "", plot.title = element_text(size=28), axis.text = element_text(size=7)) +
-  labs(caption = "Source: National Forensic Laboratory Information System (NFLIS)") +
-  ggtitle("\n Drug Seizures with Fentanyl (2011-2016) \n") 
-# ggsave("Figures/Figure2S/fentseizures_proptotal.png", width=12, height=8, units="in", dpi=300)
-
-
-############################## END FIGURE 2
-```
-
-
-```{r, include=FALSE, echo=FALSE}
+```{r tables 2a 2b, echo=FALSE, include=FALSE}
 ### IV AND MARGINALS
 minst1 = felm(age_adjusted_rate ~ 1 | ST+year | (fent_r~longitude:year) | ST+year, 
               data=presod_f, weights=presod_f$population)
@@ -439,6 +437,9 @@ minst2 = felm(age_adjusted_rate ~ fent_r | ST+year | 0 | ST+year,
 presod_f$fenteffect = presod_f$fent_r*summary(minst2)$coefficients[1]
 ```
 
+table 2
+fentr = model 1 
+fent_r(fit) = model2
 
 ```{r, results='asis'}
 #################################### TABLE 2
@@ -490,8 +491,10 @@ colnames(meff) = c("OLS", "2SLS", "Model 1 Deaths", "Model 2 Deaths")
 xtable::xtable(round(meff[,3:4]), digits=0)
 ```
 
+supplementary table a1 in appendix
+same as table above but omitting alaska and hawaii
 
-```{r, results='asis', include=FALSE,echo=FALSE}
+```{r table a1 appendix, results='asis'}
 ################################## TABLE 2 ROBUSTNESS CHECK (omitting Alaska and Hawaii
 minst3 = felm(age_adjusted_rate ~ 1 | ST+year| (fent_r~longitude:year) | ST+year, 
               data=presod_f[!(presod_f$state %in% c("Alaska", "Hawaii")),],
@@ -503,8 +506,11 @@ minst4 = felm(age_adjusted_rate ~ fent_r | ST+year | 0 | ST+year,
 stargazer(minst4, minst3, type = 'latex', header = FALSE)
 ```
 
+table 1 and correlates
 
-```{r, include=FALSE, echo=FALSE}
+longitude r squared 
+
+```{r longitude r2}
 ############################## TABLE 1 and correlates of fent seizures per capita
 
 ### LONGITUDE & FENT
@@ -516,7 +522,11 @@ for(y in sort(unique(presod_f$year))) {
   m2 = lm(fent_r~longitude, data=presod_f[presod_f$year==y & !(presod_f$ST %in% c("AK", "HI")),])
   print(paste(y, ": (NO Hawaii/Alaska) ", summary(m2)$r.squared, sep=""))
 }
+```
 
+latitude r squared
+
+```{r latitude r2}
 ### LAT
 for(y in sort(unique(presod_f$year))) {
   m = lm(fent_r~latitude, data=presod_f[presod_f$year==y,])
@@ -526,7 +536,11 @@ for(y in sort(unique(presod_f$year))) {
   m2 = lm(fent_r~latitude, data=presod_f[presod_f$year==y & !(presod_f$ST %in% c("AK", "HI")),])
   print(paste(y, ": (NO Hawaii/Alaska) ", summary(m2)$r.squared, sep=""))
 }
+```
 
+mortality 2013 r squared
+
+```{r mortality 2013 r2}
 ## Mortality 2013
 for(y in sort(unique(presod_f$year))) {
   m = lm(fent_r~MORT_2013, data=presod_f[presod_f$year==y,])
@@ -536,7 +550,11 @@ for(y in sort(unique(presod_f$year))) {
   m2 = lm(fent_r~MORT_2013, data=presod_f[presod_f$year==y & !(presod_f$ST %in% c("AK", "HI")),])
   print(paste(y, ": (NO Hawaii/Alaska) ", summary(m2)$r.squared, sep=""))
 }
+```
 
+state year bivariate longitude figure a2 appendix
+
+```{r figure a2 appendix, include=FALSE, eval=FALSE,echo=FALSE}
 ### state year bivariate longitude
 ggplot(presod_f[presod_f$year > 2011 & !(presod_f$ST %in% c("AK", "HI")),], aes(x=longitude, y=fent_r))  + 
   geom_text(aes(label=ST),hjust=0.0, vjust=0, size=3) + ylab("Fentanyl Exposure") + geom_smooth() +
@@ -558,25 +576,27 @@ ggplot(presod_f[presod_f$year > 2011 & !(presod_f$ST %in% c("AK", "HI")),], aes(
 ###
 ```
 
+table 1
 
-```{r, results='asis'}
+```{r table 1, results='asis'}
 ################################## TABLE 1
 
 ############ FENTANYL EXPOSURE 2017
-stargazer(lm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2013,]),
-          lm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2014,]),
-          lm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2015,]),
-          lm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2016,]),
-          lm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2017,]),
-          type = 'latex',
-          header = FALSE)
+stargazer(lm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2013,]), 
+          lm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2014,]), 
+          lm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2015,]), 
+          lm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2016,]), 
+          lm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2017,]), 
+          type = 'latex', 
+          header = FALSE)  
 
 
 ################################## END TABLE 1
 ```
 
+begin figure 2a and figure 2b paper
 
-```{r, fig.width=12,fig.height=8,dpi=300}
+```{r figures 2a 2b, fig.width=12,fig.height=8,dpi=300}
 ############################# BEGIN FIGURE 2
 
 #### state OD year
@@ -598,8 +618,9 @@ ggplot(presod_f, aes(x=year, y=MORT_DIFF_11, fill=(tgroup))) + geom_col() +
 ############################# END FIGURE 2
 ```
 
+figure 3
 
-```{r, fig.width=12, fig.height=8, dpi=300}
+```{r figure 3, fig.width=12, fig.height=8, dpi=300}
 ############################# FIGURE 3
 
 # annual plot
@@ -614,57 +635,9 @@ ggplot(presod_f[presod_f$year>2011 ,],
 #ggsave("Figures/Figure4/fentseizures_od_l_capita_linear_17.png", width=12, height=8, units="in", dpi=300)
 ```
 
+figure 4
 
-```{r, fig.width=12, fig.height=8, dpi=300, include = FALSE, echo = FALSE}
-# east/west MS
-ggplot(presod_f[presod_f$year %in% c("2011", "2017") ,], aes(x=fent_r,
-      y=(age_adjusted_rate), group=ST, color=tgroup)) + geom_line(alpha=0.3)+
-  geom_text(aes(label=paste(ST, substr(year, 3, 4), sep="")),hjust=0.1, 
-            vjust=-0.5, size=3) + facet_wrap(~tg2) +
-  xlab("Log(Fentanyl Seizures Per 100k)") + ylab("Age-Adjusted Overdose Mortality")  +
-  ggtitle("Fentanyl & Overdose Mortality (2011-2017)") +
-  theme_bw(base_size=14) + theme(legend.position = "", plot.title = element_text(size=22),
-                     axis.text = element_text(size=11)) #+ labs(caption = "Source: NFLIS/CDC") 
-#ggsave("Figures/Figure4/state_logseizod_facetms_17.png", width=12, height=8, units="in", dpi=300)
-
-
-#############################  END FIGURE 3
-```
-
-
-```{r, fig.width=12,fig.height=8,dpi=300, include=FALSE,echo=FALSE}
-############## FIGURE 4S
-
-# some states
-sl = c("CA", "NM", "TX", "AL", "ND", "NE", "WV", "OH", "MD", "MA", "NH", "NY", "PA", "FL", 
-       "MT", "SD", "NV", "CO", "MS")
-
-ggplot(presod_f[presod_f$year %in% c("2011", "2017") & presod_f$ST %in% sl,], aes(x=fent_r,
-  y=(age_adjusted_rate), group=ST, color=tgroup)) + geom_line(alpha=0.3)+
-  geom_text(aes(label=paste(ST, substr(year, 3, 4), sep="")),hjust=0.1, 
-            vjust=-0.5, size=3) +
-  xlab("Log(Fentanyl Seizures Per 100k)") + ylab("Age-Adjusted Overdose Mortality \n")  +
-  ggtitle("\n Fentanyl & Overdose Mortality (2011-2017) \n") +
-  theme_bw() + theme(legend.position = "", plot.title = element_text(size=22),
-                     axis.text = element_text(size=7))+ labs(caption = "Source: NFLIS/CDC") 
-
-#ggsave("Figures/Figure4S/statenamesfent_alt2_new.png", width=12, height=8, units="in", dpi=300)
-
-# all states
-ggplot(presod_f[presod_f$year %in% c("2011", "2017"),], aes(x=fent_r,
-                 y=(age_adjusted_rate), group=ST, color=tgroup)) + geom_line(alpha=0.3)+
-  geom_text(aes(label=paste(ST, substr(year, 3, 4), sep="")),hjust=0.1, 
-            vjust=-0.1, size=3) +
-  xlab("Log(Fentanyl Seizures Per 100k)") + ylab("Age-Adjusted Overdose Mortality \n")  +
-  ggtitle("\n Fentanyl & Overdose Mortality (2011-2017) \n") +
-  theme_bw() + theme(legend.position = "", plot.title = element_text(size=22),
-                     axis.text = element_text(size=7))+ labs(caption = "Source: NFLIS/CDC") 
-
-#ggsave("Figures/Figure4S/statenamesfent_alt2_new_allstates.png", width=12, height=8, units="in", dpi=300)
-```
-
-
-```{r, dpi=300}
+```{r figure 4, dpi=300}
 ############## FIGURE 4
 # simple linear regression of difference
 # linear difference for 17
@@ -687,20 +660,6 @@ lb1 <- paste("R^2 == ", round(summary(lm((age_adjusted_rate) ~ fent_r,
 # summary(lm(MORT_DIFF_11 ~ log(fentcapita), data=presod_f[presod_f$year==2016,]))
 ```
 
-
-```{r, dpi=300, include=FALSE,echo=FALSE}
-ggplot(presod_f[presod_f$year==2017,], aes(x=fent_r, y=(age_adjusted_rate))) +
-  geom_smooth(alpha=0.01, method="lm") + xlab("\n Fentanyl seizures per 100k (Natural Logarithm)") +
-  ylab("Overdose Mortality Rate, 2017 \n")  + geom_point(size=0.01) + geom_text(aes(label=ST,hjust=1, vjust=0, size=3)) +
-  ggtitle("Fentanyl & Overdose Mortality (2017) \n") +
-  theme_bw() + theme(legend.position = "", plot.title = element_text(size=22),
-                     axis.text = element_text(size=7))+
-  labs(caption = "Source: NFLIS/CDC") + annotate("text",
-                                                 label=lb1, x=0.48, y=43.74, size=5, parse=TRUE)
-#ggsave("Figures/Figure5/simple_linear_assoc.png", dpi=300)
-
-############
-```
 ### Discussion  
 
 All of the figures and tables appear to be nearly the same, with a few exceptions. Firstly, the tables presented in the paper are of a different format than those produced by stargazer; I suspect the author might have just copied the information into a different table format in Excel for example for clarity (the values are all about the same). Secondly, Table 2 in the paper does not include the residual standard errors when presented in the paper, but I think maybe it should be? Finally, and perhaps most importantly, I see some differences between the small table after table one and this one provided in the paper:
@@ -713,5 +672,15 @@ I will have to look into this further to see whether this is perhaps due to chan
 ### Extension  
 
 For my extension I am going to use an alternative regression method in place of model 2. Instead of two-stage least squares I am going to use ____ to analyze the instrumental variables.
+
+my extension attmept
+
+```{r extension}
+bayes13 <- print(stan_glm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2013,], refresh = 0), digits = 3)
+bayes14 <- print(stan_glm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2014,], refresh=0), digits = 3)
+bayes15 <- print(stan_glm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2015,], refresh=0), digits = 3)
+bayes16 <- print(stan_glm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2016,], refresh=0), digits = 3)
+bayes17 <- print(stan_glm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2017,], refresh=0), digits = 3)
+```
 
 ### References  
