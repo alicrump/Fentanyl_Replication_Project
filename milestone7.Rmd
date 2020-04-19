@@ -1,0 +1,678 @@
+---
+title: "Milestone 7"
+author: "Ali Crump"
+date: "4/16/2020"
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(tidyverse)
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(lfe)
+library(stargazer)
+library(geofacet)
+library(gtable)
+```
+
+### Abstract
+
+Zoorob (2019) shows that geography and fentanyl exposure explain much of the variation in increased overdose mortality rates between 2011 and 2017. This paper was mostly successful in replicating the results of the original paper, however there are discrepancies in the fentanyl exposure estimates and the total estimated deaths attributable to fentanyl for each model. Some of the estimates in this replication are 13% larger than those published, and the author has been notified and is working on corrections. In addition to replicating Zoorob’s work, the extension of this paper aims to adjust the definition of fentanyl exposure using log transformations and to display a range of uncertainty in the total estimated deaths. The focus of the extension is on Zoorob's ordinary least squares model and I find X. This is important because Y.
+
+### Introduction
+
+Zoorob uses two models; Model 1 shows that fentanyl exposure has a positive association with mortality rates, and Model 2 tries to estimate the causal effect of fentanyl exposure on mortality rates. Zoorob runs a least squares regression for the first model. The model predicts overdose mortality as a function of fentanyl exposure. Fentanyl exposure takes into account the state, year, an error term, and the natural logarithm of the number of test results containing fentanyl:
+
+$Fentanyl_{ij} = \log{(\frac{S_{ij}}{P_{ij}} + 1)}$
+
+Model 1 below is an ordinary least squares equation where $\alpha_{i}$ is state $i$ and $\eta_{j}$ is year $j$ The standard errors are two-way clustered by state and year and includes population weights (@Paper). 
+
+$Overdose_{ij} = \alpha_{i} + \eta_{j} + \beta_{1}Fentanyl_{ij} + \epsilon_{ij}$
+
+The second model uses a two-stage least squares regression:
+
+$\widehat{Fentanyl_{ij}} = \alpha_{i} + \eta_{j} + \beta_{1}(Longitude_{i}\cdot Year_{j}) + \epsilon_{ij}Overdose_{ij} = \alpha_{i} + \eta_{j} + \beta_{2}\widehat{Fentanyl_{ij}} + \epsilon_{ij}$
+
+Findings in the paper show that much of the variation in the increased overdose mortality is explained by fentanyl exposure, and that fentanyl deaths are highly correlated with geography, as the epicenter of the overdose crisis has shifted towards the eastern U.S. They also found that longitude is better able to explain levels of overdose mortality over time. States east of the Mississippi River tend to have greater fentanyl exposure and sharper increases in overdose deaths than states west of the Mississippi River (@Paper). Zoorob also uses both models to estimate the number or overdose deaths attributable to fentanyl and claims that they are broadly consistent with official mortality statistics.  
+
+Zoorob obtained the data used for his analysis through a Freedom of Information Act request. The data consist of state test results for drug seizures between 2011 and 2016, which he filters for test results containing fentanyl. Zoorob also uses age-adjusted mortality data from the National Center for Health Statistics. All the data used contain state and year information, and he uses state-annual populatons to calcaulte mortality rates relative to a state's population in a particular year. The data and code that Zoorob used in his paper is available on the [Harvard Dataverse](https://doi.org/10.7910/DVN/8FWVFK). To conduct my replication, I used R. More information on this project can be found on my Github repository.^[[Github repository](https://github.com/alicrump/Fentanyl_Replication_Project)]  
+
+**What did I do?**
+
+Redefine $Fentanyl_{ij} = \log{(\frac{S_{ij}}{P_{ij}} + 1)}$
+Display range of uncertainty
+
+**What did I find?**
+
+Zoorob's method for measuring fentanyl exposure is the closest to official mortality statistics.
+What is the range of uncertainty
+
+### Literature Review
+
+**relevant literature in the paper**  
+
+The number of drug overdose deaths in the United states has rapidly increased since 2014. However, the opiod epidemic did not affect all regions of the U.S. equally; according to the CDC, almost all states west of the Mississippi River did not see an increase while those to the west did. While Dasgupta et. al argue social and economic factors play a role in one's susceptibility to opiod addiction and overdose, Zoorob claims that the geographical patterns point to drug supply also playing a primary role in the epidemic.
+ 
+**relevant literature since the paper published**  
+
+Research by Barocas et al. on the effect of opiod use among patients with endocarditis cites Zoorob's paper and also finds a decreased risk of overdose associated with the West and South compared to the Northeast (@endocarditis).
+Although in 2018, drug overdose deaths actually decreased by 4.6% from 2017 in the United States, fentanyl deaths continued to rise (@CDC)(@NYT). (Still looking for literature on this)
+
+
+```{r read in data, cache=TRUE}
+fent2017nflis <- read_rds("data/fent2017nflis.rds")
+FOIA11_16 <- read_rds("data/FOIA11_16.rds")
+FOIA11_16_State <- read_rds("data/FOIA11_16_State.rds")
+heroin <- read_rds("data/heroin.rds")
+latlon <- read_rds("data/latlon.rds")
+overdose <- read_rds("data/overdose.rds")
+poison_multiple <- read_rds("data/poison_multiple.rds")
+
+```
+
+```{r}
+d = unique(c(
+  unique(FOIA11_16$subst1)[grep("fentanyl|Fentanyl|FENTANYL",
+                            unique(FOIA11_16$subst1))],
+    unique(FOIA11_16$subst2)[grep("fentanyl|Fentanyl|FENTANYL",
+                             unique(FOIA11_16$subst2))], "U-47700"
+    ))
+h_string = c("Heroin", "heroin", "HEROIN")
+d_h = c(d, "Heroin", "heroin", "HEROIN")
+
+
+FOIA11_16$fent = as.numeric(rowSums(`dim<-`(as.matrix(FOIA11_16) %in% d, dim(FOIA11_16))) >= 1)
+FOIA11_16$heroin = as.numeric(rowSums(`dim<-`(as.matrix(FOIA11_16) %in% c("Heroin"), dim(FOIA11_16))) >= 1)
+FOIA11_16$date = mdy(FOIA11_16$submit_date)
+FOIA11_16$year = year(FOIA11_16$date)
+
+fentstateyear = FOIA11_16 %>%
+  group_by(state, year) %>%
+  summarize(any = n(), propfent = mean(fent),
+            sumfent = sum(fent),sumheroin = sum(heroin))
+
+# other states
+FOIA11_16_State$fent = as.numeric(rowSums(`dim<-`(as.matrix(FOIA11_16_State) %in% d, dim(FOIA11_16_State))) >= 1)
+FOIA11_16_State$heroin = as.numeric(rowSums(`dim<-`(as.matrix(FOIA11_16_State) %in% c("Heroin"), dim(FOIA11_16_State))) >= 1)
+#FOIA11_16_State$date = mdy(FOIA11_16_State$SubmitD1ate)
+FOIA11_16_State$year = as.numeric(FOIA11_16_State$case_received_year)
+
+fentstateyear2 = FOIA11_16_State %>% 
+  group_by(state, year) %>% 
+  summarize(any = sum(count_of_reported_result),
+            propfent = mean(fent*count_of_reported_result),
+            sumfent = sum(fent*count_of_reported_result),
+            sumheroin = sum(heroin*count_of_reported_result))
+
+overdose$ST = state.abb[match(overdose$state,state.name)]
+overdose[is.na(overdose$ST), "ST"] = "DC"
+overdose$age_adjusted_rate = NULL
+```
+
+
+```{r, include = FALSE, echo = FALSE}
+############### PLOTS
+############ FIGURE 1
+
+# fentyear
+fentyear = fentstateyear %>% 
+  group_by(year) %>% 
+  summarize(sumfent = sum(sumfent))
+
+### incorporate fentanyl from 2017
+fent2017nflis$ST = state.abb[match(fent2017nflis$state,state.name)]
+fent2017nflis$year = 2017
+fent2017nflis[is.na(fent2017nflis$ST), "ST"] = "DC"
+#
+
+fentyear = rbind(fentyear, c(2017, sum(fent2017nflis$allfent)))
+ggplot(fentyear, aes(factor(year), sumfent/1000, fill="Black")) + 
+  geom_col(fill="Black") + 
+  xlab("") +
+  ylab("Fentanyl Test Reports (Thousands) \n") + 
+  geom_text(aes(label=sumfent),hjust=0.5, vjust=-0.5, size=6) +
+  theme_classic() +  
+  theme(legend.position="", axis.text=element_text(size=14), axis.title.y=element_text(size=14))
+
+
+### incorporate heroin from 2017
+heroin$ST = state.abb[match(heroin$state,state.name)]
+heroin$year = 2017
+heroin[is.na(heroin$ST), "ST"] = "DC"
+
+############# END FIGURE 1
+```
+
+
+```{r}
+## geo facet - fent count year
+
+fentstateyear_m = rbind(fentstateyear, fentstateyear2)
+fentstateyear_m = fentstateyear_m %>% 
+  group_by(state, year) %>% 
+  summarize(sumfent = sum(sumfent),
+            any = sum(any), 
+            sumheroin=sum(sumheroin))
+
+fentstateyear_m$propfent = fentstateyear_m$sumfent/fentstateyear_m$any
+
+###
+# get 2017
+d17b = fent2017nflis[,c("ST", "year", "allfent")]
+colnames(d17b)[3] = "sumfent"
+d17b$any = NA
+d17b = merge(d17b, heroin[,2:4])
+colnames(d17b)[1] = "state"
+colnames(d17b)[5] = "sumheroin"
+d17b$propfent = NA
+
+
+fentstateyear_m = rbind(data.frame(fentstateyear_m), d17b)
+
+####################### clean up; end drug seizures processing
+presod_f = fentstateyear_m[fentstateyear_m$state != "PR",]
+presod_f$logfent = log(presod_f$sumfent+1)
+
+##
+
+############ merge  od with seizures
+################## GET state year POP
+poison_multiple$ST = state.abb[match(poison_multiple$state,state.name)]
+poison_multiple[is.na(poison_multiple$ST), "ST"] = "DC"
+
+presod_f = merge(presod_f, poison_multiple, by.x=c("state", "year"), by.y = c("ST", "year"))
+colnames(presod_f)[1]="ST"
+colnames(presod_f)[8] = "state"
+
+########## GET LAT LON
+presod_f = merge(presod_f, latlon)
+
+###########
+presod_f$fentcapita = presod_f$sumfent/presod_f$population*100000
+# take log of seizures per capita
+presod_f$fent_r = log(presod_f$fentcapita+1)
+presod_f$perfent = presod_f$propfent*100
+#######
+
+#### TGROUP
+#presod_f$tgroup = as.numeric(presod_f$longitude >= -90)
+presod_f$tgroup = as.numeric(presod_f$longitude>-89.978027)
+presod_f$tg2 = "West of MS River"
+presod_f[presod_f$tgroup==1, "tg2"] = "East of MS River"
+####
+
+#### create lagged dvs for mortality rate in 2013 and mortality rate in 2011 
+lagdv = presod_f[presod_f$year==2013, c("state", "age_adjusted_rate")]
+colnames(lagdv) = c("state", "MORT_2013")
+presod_f = merge(presod_f, lagdv)
+
+lagdv = presod_f[presod_f$year==2011, c("state", "age_adjusted_rate")]
+colnames(lagdv) = c("state", "MORT_2011")
+presod_f = merge(presod_f, lagdv, all.x=TRUE, all.y=FALSE)
+
+# create first difference style variables
+presod_f$MORT_DIFF_11 = presod_f$age_adjusted_rate - presod_f$MORT_2011
+# robustness/placebo
+presod_f$MORT_DIFF_13 = presod_f$age_adjusted_rate - presod_f$MORT_2013
+
+# prop heroin & heroin per capita
+presod_f$propheroin = presod_f$sumheroin/presod_f$any
+presod_f$heroincapita = presod_f$sumheroin/presod_f$population*100000
+presod_f$heroin_r = log(presod_f$heroincapita+1)
+presod_f$perheroin = presod_f$propheroin*100
+```
+
+### Appendix  
+
+```{r figure 1,fig.height=8, fig.width=12, dpi=300}
+############################## FIGURE 2
+ggplot(presod_f, aes(x=year, 100*fentcapita, fill=tgroup)) + 
+  geom_col() + 
+  xlab("") +
+  ylab("Fentanyl/Analogues per 100k \n") + 
+  facet_geo(~state, scales="fixed") +
+  theme_bw() + 
+  theme(legend.position = "", plot.title = element_text(size=28), axis.text = element_text(size=7)) +
+  labs(caption = "Source: National Forensic Laboratory Information System (NFLIS)") +
+  ggtitle("\n Drug Seizures with Fentanyl (2011-2017) \n") 
+# ggsave("Figures/Figure2/figure2_fentcapita_17.png", width=12, height=8, units="in", dpi=300)
+```
+
+
+tables 2a 2b
+
+```{r tables 2a 2b, echo=FALSE, include=FALSE}
+### IV AND MARGINALS
+minst1 = felm(age_adjusted_rate ~ 1 | ST+year | (fent_r~longitude:year) | ST+year, 
+              data=presod_f, weights=presod_f$population)
+presod_f$fenteffectiv = presod_f$fent_r*summary(minst1)$coefficients[1]
+
+## first stage F
+summary(minst1$stage1)$iv1fstat["F"]
+##
+
+minst2 = felm(age_adjusted_rate ~ fent_r | ST+year | 0 | ST+year, 
+              data=presod_f, weights=presod_f$population)
+presod_f$fenteffect = presod_f$fent_r*summary(minst2)$coefficients[1]
+```
+
+table 2
+fentr = model 1 
+fent_r(fit) = model2
+
+```{r, results='asis'}
+#################################### TABLE 2
+stargazer(minst2, minst1, type = 'latex', header = FALSE)
+
+# save coefs
+ols_coef = summary(minst2)$coefficients[1]
+iv_coef = summary(minst1)$coefficients[1]
+
+### estimate deaths
+estdeath = function(dat, year, beta=ols_coef) {
+  sum(beta*(dat[dat[,"year"]==year, "fent_r"])*(dat[dat[,"year"]==year,"population"]/100000))
+}
+
+# marginal effects df
+meff = data.frame(cbind(
+  rbind(               mean(presod_f[presod_f$year==2011,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2012,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2013,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2014,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2015,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2016,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2017,"fenteffect"])),
+  rbind(mean(presod_f[presod_f$year==2011,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2012,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2013,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2014,"fenteffectiv"]),
+        mean(presod_f[presod_f$Ysear==2015,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2016,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2017,"fenteffectiv"])),
+  rbind(estdeath(presod_f, 2011),
+        estdeath(presod_f, 2012),
+        estdeath(presod_f, 2013),
+        estdeath(presod_f, 2014),
+        estdeath(presod_f, 2015),
+        estdeath(presod_f, 2016),
+        estdeath(presod_f, 2017)),
+  rbind(estdeath(presod_f, 2011, iv_coef),
+        estdeath(presod_f, 2012, iv_coef),
+        estdeath(presod_f, 2013, iv_coef),
+        estdeath(presod_f, 2014, iv_coef),
+        estdeath(presod_f, 2015, iv_coef),
+        estdeath(presod_f, 2016, iv_coef),
+        estdeath(presod_f, 2017, iv_coef))),
+  row.names = c(2011:2017))
+colnames(meff) = c("OLS", "2SLS", "Model 1 Deaths", "Model 2 Deaths")
+
+# xtable::xtable(meff)
+xtable::xtable(round(meff[,3:4]), digits=0)
+```
+
+supplementary table a1 in appendix
+same as table above but omitting alaska and hawaii
+
+```{r table a1 appendix, results='asis'}
+################################## TABLE 2 ROBUSTNESS CHECK (omitting Alaska and Hawaii
+minst3 = felm(age_adjusted_rate ~ 1 | ST+year| (fent_r~longitude:year) | ST+year, 
+              data=presod_f[!(presod_f$state %in% c("Alaska", "Hawaii")),],
+              weights=presod_f[!(presod_f$state %in% c("Alaska", "Hawaii")),]$population)
+minst4 = felm(age_adjusted_rate ~ fent_r | ST+year | 0 | ST+year, 
+              data=presod_f[!(presod_f$state %in% c("Alaska", "Hawaii")),],
+              weights=presod_f[!(presod_f$state %in% c("Alaska", "Hawaii")),]$population)
+
+stargazer(minst4, minst3, type = 'latex', header = FALSE)
+```
+
+table 1 and correlates
+
+longitude r squared 
+
+```{r longitude r2}
+############################## TABLE 1 and correlates of fent seizures per capita
+
+### LONGITUDE & FENT
+for(y in sort(unique(presod_f$year))) {
+  m = lm(fent_r~longitude, data=presod_f[presod_f$year==y,])
+  #print(summary(m)$coefficients[2,])
+  print(paste(y, ": ", summary(m)$r.squared, sep=""))
+  
+  m2 = lm(fent_r~longitude, data=presod_f[presod_f$year==y & !(presod_f$ST %in% c("AK", "HI")),])
+  print(paste(y, ": (NO Hawaii/Alaska) ", summary(m2)$r.squared, sep=""))
+}
+```
+
+latitude r squared
+
+```{r latitude r2}
+### LAT
+for(y in sort(unique(presod_f$year))) {
+  m = lm(fent_r~latitude, data=presod_f[presod_f$year==y,])
+  #print(summary(m)$coefficients[2,])
+  print(paste(y, ": ", summary(m)$r.squared, sep=""))
+  
+  m2 = lm(fent_r~latitude, data=presod_f[presod_f$year==y & !(presod_f$ST %in% c("AK", "HI")),])
+  print(paste(y, ": (NO Hawaii/Alaska) ", summary(m2)$r.squared, sep=""))
+}
+```
+
+mortality 2013 r squared
+
+```{r mortality 2013 r2}
+## Mortality 2013
+for(y in sort(unique(presod_f$year))) {
+  m = lm(fent_r~MORT_2013, data=presod_f[presod_f$year==y,])
+  #print(summary(m)$coefficients[2,])
+  print(paste(y, ": ", summary(m)$r.squared, sep=""))
+  
+  m2 = lm(fent_r~MORT_2013, data=presod_f[presod_f$year==y & !(presod_f$ST %in% c("AK", "HI")),])
+  print(paste(y, ": (NO Hawaii/Alaska) ", summary(m2)$r.squared, sep=""))
+}
+```
+
+
+table 1
+
+```{r table 1, results='asis'}
+################################## TABLE 1
+
+############ FENTANYL EXPOSURE 2017
+stargazer(lm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2013,]), 
+          lm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2014,]), 
+          lm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2015,]), 
+          lm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2016,]), 
+          lm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2017,]), 
+          type = 'latex', 
+          header = FALSE)  
+
+
+################################## END TABLE 1
+```
+
+begin figure 2a and figure 2b paper
+
+```{r figures 2a 2b, fig.width=12,fig.height=8,dpi=300}
+############################# BEGIN FIGURE 2
+
+#### state OD year
+ggplot(presod_f, aes(x=year, age_adjusted_rate, fill=tgroup)) + geom_col() + xlab("") +
+  ylab("Age-Adjusted Mortality \n") + facet_geo(~state, scales="fixed") +
+  ggtitle("\n Trend in Overdose Mortality (2011-2016) \n") +
+  theme_bw() + theme(legend.position = "", plot.title = element_text(size=28),  axis.text = element_text(size=7))+
+  labs(caption = "Source: CDC WONDER") 
+#ggsave("Figures/Figure3/odyear.png", width=12, height=8, units="in", dpi=300)
+
+# REGIONALITY OF Changing overdose
+ggplot(presod_f, aes(x=year, y=MORT_DIFF_11, fill=(tgroup))) + geom_col() +
+  xlab("") + ylab("Change in OD Mortality (compared with 2011) \n") +
+  facet_geo(~state, scales="fixed") +
+  ggtitle("\n Regionality of Changing Overdose Mortality \n") +
+  theme_bw()  + theme(legend.position = "", plot.title = element_text(size=28), axis.text = element_text(size=7))
+#ggsave("Figures/Figure3/regionality_deltaod_17.png", width=12, height=8, units="in", dpi=300)
+
+############################# END FIGURE 2
+```
+
+### Replication  
+
+The replication was partially successful.
+
+### Extension  
+
+For my extension I define fentanyl exposure differently. Zoorob defines a measure of fentanyl exposure as $Fentanyl_{ij} = \log{(\frac{S_{ij}}{P_{ij}} + 1)}$. I define fentanyl exposure several ways: 
+
+1. $Fentanyl_{ij} = \log{(S_{ij} + 1)}$
+2. $Fentanyl_{ij} = \frac{S_{ij}}{\log{(P_{ij} + 1)}} + 1$
+3. $Fentanyl_{ij} = \frac{\log{({S_{ij}} + 1)}}{\log{(P_{ij} + 1)}}$
+
+```{r}
+presod_f <- presod_f %>% 
+  mutate(ext1 = log(sumfent + 1)) %>% 
+  mutate(ext2 = sumfent/log(population + 1)) %>% 
+  mutate(ext3 = log(sumfent + 1)/log(population + 1))
+```
+
+Extension 1 
+
+```{r, results='asis'}
+############ FENTANYL EXPOSURE 2017
+stargazer(lm(ext1~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2013,]), 
+          lm(ext1~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2014,]), 
+          lm(ext1~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2015,]), 
+          lm(ext1~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2016,]), 
+          lm(ext1~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2017,]), 
+          type = 'latex', 
+          header = FALSE)  
+```
+
+```{r ext1 tables, echo=FALSE, include=FALSE}
+### IV AND MARGINALS
+minst1 = felm(age_adjusted_rate ~ 1 | ST+year | (ext1~longitude:year) | ST+year, 
+              data=presod_f, weights=presod_f$population)
+presod_f$fenteffectiv = presod_f$ext1*summary(minst1)$coefficients[1]
+
+## first stage F
+summary(minst1$stage1)$iv1fstat["F"]
+##
+
+minst2 = felm(age_adjusted_rate ~ ext1 | ST+year | 0 | ST+year, 
+              data=presod_f, weights=presod_f$population)
+presod_f$fenteffect = presod_f$ext1*summary(minst2)$coefficients[1]
+```
+
+```{r, results='asis'}
+#################################### TABLE 2
+stargazer(minst2, minst1, type = 'latex', header = FALSE)
+
+# save coefs
+ols_coef = summary(minst2)$coefficients[1]
+iv_coef = summary(minst1)$coefficients[1]
+
+### estimate deaths
+estdeath = function(dat, year, beta=ols_coef) {
+  sum(beta*(dat[dat[,"year"]==year, "ext1"])*(dat[dat[,"year"]==year,"population"]/100000))
+}
+
+# marginal effects df
+meff = data.frame(cbind(
+  rbind(               mean(presod_f[presod_f$year==2011,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2012,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2013,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2014,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2015,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2016,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2017,"fenteffect"])),
+  rbind(mean(presod_f[presod_f$year==2011,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2012,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2013,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2014,"fenteffectiv"]),
+        mean(presod_f[presod_f$Ysear==2015,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2016,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2017,"fenteffectiv"])),
+  rbind(estdeath(presod_f, 2011),
+        estdeath(presod_f, 2012),
+        estdeath(presod_f, 2013),
+        estdeath(presod_f, 2014),
+        estdeath(presod_f, 2015),
+        estdeath(presod_f, 2016),
+        estdeath(presod_f, 2017)),
+  rbind(estdeath(presod_f, 2011, iv_coef),
+        estdeath(presod_f, 2012, iv_coef),
+        estdeath(presod_f, 2013, iv_coef),
+        estdeath(presod_f, 2014, iv_coef),
+        estdeath(presod_f, 2015, iv_coef),
+        estdeath(presod_f, 2016, iv_coef),
+        estdeath(presod_f, 2017, iv_coef))),
+  row.names = c(2011:2017))
+colnames(meff) = c("OLS", "2SLS", "Model 1 Deaths", "Model 2 Deaths")
+
+# xtable::xtable(meff)
+xtable::xtable(round(meff[,3:4]), digits=0)
+```
+
+Extension 2 
+
+```{r, results='asis'}
+############ FENTANYL EXPOSURE 2017
+stargazer(lm(ext2~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2013,]), 
+          lm(ext2~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2014,]), 
+          lm(ext2~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2015,]), 
+          lm(ext2~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2016,]), 
+          lm(ext2~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2017,]), 
+          type = 'latex', 
+          header = FALSE)  
+```
+
+```{r ext2 tables, echo=FALSE, include=FALSE}
+### IV AND MARGINALS
+minst1 = felm(age_adjusted_rate ~ 1 | ST+year | (ext2~longitude:year) | ST+year, 
+              data=presod_f, weights=presod_f$population)
+presod_f$fenteffectiv = presod_f$ext2*summary(minst1)$coefficients[1]
+
+## first stage F
+summary(minst1$stage1)$iv1fstat["F"]
+##
+
+minst2 = felm(age_adjusted_rate ~ ext2 | ST+year | 0 | ST+year, 
+              data=presod_f, weights=presod_f$population)
+presod_f$fenteffect = presod_f$ext2*summary(minst2)$coefficients[1]
+```
+
+```{r, results='asis'}
+#################################### TABLE 2
+stargazer(minst2, minst1, type = 'latex', header = FALSE)
+
+# save coefs
+ols_coef = summary(minst2)$coefficients[1]
+iv_coef = summary(minst1)$coefficients[1]
+
+### estimate deaths
+estdeath = function(dat, year, beta=ols_coef) {
+  sum(beta*(dat[dat[,"year"]==year, "ext2"])*(dat[dat[,"year"]==year,"population"]/100000))
+}
+
+# marginal effects df
+meff = data.frame(cbind(
+  rbind(               mean(presod_f[presod_f$year==2011,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2012,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2013,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2014,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2015,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2016,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2017,"fenteffect"])),
+  rbind(mean(presod_f[presod_f$year==2011,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2012,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2013,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2014,"fenteffectiv"]),
+        mean(presod_f[presod_f$Ysear==2015,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2016,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2017,"fenteffectiv"])),
+  rbind(estdeath(presod_f, 2011),
+        estdeath(presod_f, 2012),
+        estdeath(presod_f, 2013),
+        estdeath(presod_f, 2014),
+        estdeath(presod_f, 2015),
+        estdeath(presod_f, 2016),
+        estdeath(presod_f, 2017)),
+  rbind(estdeath(presod_f, 2011, iv_coef),
+        estdeath(presod_f, 2012, iv_coef),
+        estdeath(presod_f, 2013, iv_coef),
+        estdeath(presod_f, 2014, iv_coef),
+        estdeath(presod_f, 2015, iv_coef),
+        estdeath(presod_f, 2016, iv_coef),
+        estdeath(presod_f, 2017, iv_coef))),
+  row.names = c(2011:2017))
+colnames(meff) = c("OLS", "2SLS", "Model 1 Deaths", "Model 2 Deaths")
+
+# xtable::xtable(meff)
+xtable::xtable(round(meff[,3:4]), digits=0)
+```
+
+Extension 3 
+
+```{r, results='asis'}
+############ FENTANYL EXPOSURE 2017
+stargazer(lm(ext3~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2013,]), 
+          lm(ext3~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2014,]), 
+          lm(ext3~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2015,]), 
+          lm(ext3~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2016,]), 
+          lm(ext3~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2017,]), 
+          type = 'latex', 
+          header = FALSE)  
+```
+```{r ext3 tables, echo=FALSE, include=FALSE}
+### IV AND MARGINALS
+minst1 = felm(age_adjusted_rate ~ 1 | ST+year | (ext3~longitude:year) | ST+year, 
+              data=presod_f, weights=presod_f$population)
+presod_f$fenteffectiv = presod_f$ext3*summary(minst1)$coefficients[1]
+
+## first stage F
+summary(minst1$stage1)$iv1fstat["F"]
+##
+
+minst2 = felm(age_adjusted_rate ~ ext3 | ST+year | 0 | ST+year, 
+              data=presod_f, weights=presod_f$population)
+presod_f$fenteffect = presod_f$ext3*summary(minst2)$coefficients[1]
+```
+
+```{r, results='asis'}
+#################################### TABLE 2
+stargazer(minst2, minst1, type = 'latex', header = FALSE)
+
+# save coefs
+ols_coef = summary(minst2)$coefficients[1]
+iv_coef = summary(minst1)$coefficients[1]
+
+### estimate deaths
+estdeath = function(dat, year, beta=ols_coef) {
+  sum(beta*(dat[dat[,"year"]==year, "ext3"])*(dat[dat[,"year"]==year,"population"]/100000))
+}
+
+# marginal effects df
+meff = data.frame(cbind(
+  rbind(               mean(presod_f[presod_f$year==2011,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2012,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2013,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2014,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2015,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2016,"fenteffect"]),
+                       mean(presod_f[presod_f$year==2017,"fenteffect"])),
+  rbind(mean(presod_f[presod_f$year==2011,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2012,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2013,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2014,"fenteffectiv"]),
+        mean(presod_f[presod_f$Ysear==2015,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2016,"fenteffectiv"]),
+        mean(presod_f[presod_f$year==2017,"fenteffectiv"])),
+  rbind(estdeath(presod_f, 2011),
+        estdeath(presod_f, 2012),
+        estdeath(presod_f, 2013),
+        estdeath(presod_f, 2014),
+        estdeath(presod_f, 2015),
+        estdeath(presod_f, 2016),
+        estdeath(presod_f, 2017)),
+  rbind(estdeath(presod_f, 2011, iv_coef),
+        estdeath(presod_f, 2012, iv_coef),
+        estdeath(presod_f, 2013, iv_coef),
+        estdeath(presod_f, 2014, iv_coef),
+        estdeath(presod_f, 2015, iv_coef),
+        estdeath(presod_f, 2016, iv_coef),
+        estdeath(presod_f, 2017, iv_coef))),
+  row.names = c(2011:2017))
+colnames(meff) = c("OLS", "2SLS", "Model 1 Deaths", "Model 2 Deaths")
+
+# xtable::xtable(meff)
+xtable::xtable(round(meff[,3:4]), digits=0)
+```
+
+These estimates from extensions 1 and 3 are much higher than Zoorob's estimates and the official mortality statistics. Extension 2 is much lower than the official mortality statistics. Zoorob's method of defining fentanyl exposure appears to be the best.
+
+I'm still not sure how I'm going to present the uncertainty in these estimates. 
+
+
