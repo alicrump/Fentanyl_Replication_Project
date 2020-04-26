@@ -684,7 +684,7 @@ options(xtable.comment = FALSE)
 
 ### Conclusion
 
-My ordinary least squares estimated fentanyl deaths from extensions 1 and 3, totaling to 234,037 and 238,812 respectively, are much larger than Zoorob's corrected estimates, totaling to 96,969. Zoorob's corrected 2016 estimate, 26,491 deaths, is also more consistent with the official mortality statistic of 19,400 than either of the extension estimates: 46,641, 5,732, and 47,610 respectively. Estimates from extensions 1 and 3 appear to be too high, and estimates from extension 2 appear to be too low to be consistent with official mortality statistics.
+My ordinary least squares estimated fentanyl deaths from extensions 1 and 3, totaling to 234,037 and 238,812 respectively, are much larger than Zoorob's corrected estimates, totaling to 96,969. Zoorob's corrected 2016 estimate, 26,491 deaths, is also more consistent with the official mortality statistic of 19,400 than either of the extension estimates: 46,641, 5,732, and 47,610 respectively. Estimates from extensions 1 and 3 appear to be too high, and estimates from extension 2 appear to be too low to be consistent with official mortality statistics. 
 
 Moreover, when comparing R^2^ values for each model, Zoorob's method of defining fentanyl exposure appears to explain more of the variation in mortality rate than any of the extensions. Zoorob's R^2^ for the OLS model is 0.915, whereas those of the extensions are 0.840, 0.883, and 0.846. 
 
