@@ -62,7 +62,7 @@ Although in 2018, drug overdose deaths actually decreased by 4.6% from 2017 in t
 
 
 ```{r read data 1, cache=TRUE}
-poison_multiple <- read_csv("nflis_dataverse/drugpoisonings_multiplecausesofdeath_stateyear_19992017pop.csv", 
+poison_multiple <- read_csv("data/drugpoisonings_multiplecausesofdeath_stateyear_19992017pop.csv", 
                             col_types = cols(State = col_character(),
                                              Year = col_double(),
                                              Deaths = col_double(),
@@ -70,11 +70,14 @@ poison_multiple <- read_csv("nflis_dataverse/drugpoisonings_multiplecausesofdeat
                                              `Crude Rate` = col_double(),
                                              `Age Adjusted Rate` = col_double())) %>% 
                    clean_names()
+write_rds(poison_multiple, "data/poison_multiple.rds")
 ```
 
 
-```{r read data 2, cache=TRUE}
-poison_underlying <- read_csv("nflis_dataverse/drugpoisonings_underlyingcauseofdeath_stateyear_19992017pop.csv", 
+```{r read data 2, eval=FALSE}
+# they don't use this data
+
+poison_underlying <- read_csv("data/drugpoisonings_underlyingcauseofdeath_stateyear_19992017pop.csv", 
                               col_types = cols(State = col_character(),
                                                Year = col_double(),
                                                Deaths = col_double(),
@@ -86,14 +89,17 @@ poison_underlying <- read_csv("nflis_dataverse/drugpoisonings_underlyingcauseofd
 
 
 ```{r read data 3, cache=TRUE}
-fent2017nflis <- read_csv("nflis_dataverse/fent2017nflis.csv",
+fent2017nflis <- read_csv("data/fent2017nflis.csv",
                           col_types = cols(.default = col_double(),
                                             State = col_character())) %>% 
                  clean_names()
+write_rds(fent2017nflis, "data/fent2017nflis.rds")
 ```
 
-```{r read data 4, cache=TRUE}
-FOIA01_05 <- read_delim("nflis_dataverse/FOIA_ItemLevelData_2001_2005.txt", 
+```{r read data 4, eval=FALSE}
+# they don't use this data
+
+FOIA01_05 <- read_delim("data/FOIA_ItemLevelData_2001_2005.txt", 
                         delim = ",", 
                         col_types = cols(.default = col_logical(),
                                           State = col_character(),
@@ -120,8 +126,9 @@ FOIA01_05 <- read_delim("nflis_dataverse/FOIA_ItemLevelData_2001_2005.txt",
               clean_names()
 ```
 
-```{r read data 5, cache=TRUE}
-FOIA06_10 <- read_delim("nflis_dataverse/FOIA_ItemLevelData_20062010.txt",
+```{r read data 5, eval=FALSE}
+# they don't use this data
+FOIA06_10 <- read_delim("data/FOIA_ItemLevelData_20062010.txt",
                         delim = ",", 
                         col_names = c("state","nflis_id","analysis_id",
                                       "submit_date","how_acquired","color",
@@ -156,7 +163,7 @@ FOIA06_10 <- read_delim("nflis_dataverse/FOIA_ItemLevelData_20062010.txt",
 
 
 ```{r read data 6, cache=TRUE}
-FOIA11_16 <- read_delim("nflis_dataverse/FOIA_ItemLevelData_20112016.txt",
+FOIA11_16 <- read_delim("data/FOIA_ItemLevelData_20112016.txt",
                         delim = ",",
                         col_names = c("state","nflis_id","analysis_id",
                                       "submit_date","how_acquired","color",
@@ -187,10 +194,11 @@ FOIA11_16 <- read_delim("nflis_dataverse/FOIA_ItemLevelData_20112016.txt",
                                           origin = col_character(),
                                           manufacturer = col_character())) %>% 
                        clean_names()
+write_rds(FOIA11_16, "data/FOIA11_16.rds")
 ```
 
 ```{r read data 7, cache=TRUE}
-FOIA11_16_State <- read_delim("nflis_dataverse/FOIA_StateLevelData_20112016.txt",
+FOIA11_16_State <- read_delim("data/FOIA_StateLevelData_20112016.txt",
                               delim = ",", 
                               col_types = cols(State = col_character(),
                                                CaseReceived_Year = col_double(),
@@ -211,39 +219,45 @@ FOIA11_16_State <- read_delim("nflis_dataverse/FOIA_StateLevelData_20112016.txt"
                                                Form = col_character(),
                                                AveragePurity = col_double())) %>% 
                    clean_names()
+write_rds(FOIA11_16_State, "data/FOIA11_16_State.rds")
 ```
 
 
 ```{r read data 8, cache=TRUE}
-heroin <- read_csv("nflis_dataverse/heroin2017nflis.csv", 
+heroin <- read_csv("data/heroin2017nflis.csv", 
                    col_types = cols(State = col_character(),
                                     Heroin = col_double(),
                                     Year = col_double())) %>% 
           clean_names()
+write_rds(heroin, "data/heroin.rds")
 ```
 
 
 ```{r read data 9, cache=TRUE}
-latlon <- read_csv("nflis_dataverse/latlon.csv", 
+latlon <- read_csv("data/latlon.csv", 
                    col_types = cols(State = col_character(),
                                     Latitude = col_double(),
                                     Longitude = col_double())) %>%
           clean_names()
+write_rds(latlon, "data/latlon.rds")
 ```
 
 
 ```{r read data 10, cache=TRUE}
-overdose <- read_csv("nflis_dataverse/rx_od_state_0616.csv", 
+overdose <- read_csv("data/rx_od_state_0616.csv", 
                      col_types = cols(State = col_character(),
                                       Year = col_double(),
                                       Rate = col_double(),
                                       Age.Adjusted.Rate = col_double())) %>%
             clean_names()
+write_rds(overdose, "data/overdose.rds")
 ```
 
 
-```{r read data 11, cache=TRUE}
-state_overdose <- read_csv("nflis_dataverse/state_od_19992016_pop.csv", 
+```{r read data 11, eval=FALSE}
+# they dont use this data
+
+state_overdose <- read_csv("data/state_od_19992016_pop.csv", 
                            col_types = cols(State = col_character(),
                                             Year = col_double(),
                                             Deaths = col_double(),
