@@ -9,6 +9,8 @@ output:
       number_sections: False
   link_citations: yes
 bibliography: bibliography.bib
+abstract: |
+    Zoorob (2019) shows that geography and fentanyl exposure explain much of the variation in increased overdose mortality rates between 2011 and 2017. I successfully replicated much of Zoorob's results, but I found discrepancies in the fentanyl exposure coefficients and the total death estimates for each model. My replication finds that the total death estimates are approximately 13% and 16% larger for each model and that the regression coefficients on fentanyl are slightly larger than those published. In addition to replicating Zoorob’s work, this paper provides a Rubin causal model table to better understand the model framework, focusing on explaining the ordinary least-squares model. Next, the bulk of the extension investigates alternative definitions of fentanyl exposure while keeping all of Zoorob’s other modeling choices the same. The original paper's definition of fentanyl exposure explains more variation in age-adjusted mortality rates than those proposed in the extension. This finding is important because many different methods of defining fentanyl exposure exist, however, the proposed alternative definitions in this extension do not appear to improve Zoorob's model.
 ---
 
 ```{r setup, include=FALSE}
@@ -26,13 +28,9 @@ library(gtable)
 library(kableExtra)
 ```
 
-### Abstract
-
-|  Zoorob (2019) shows that geography and fentanyl exposure explain much of the variation in increased overdose mortality rates between 2011 and 2017. I successfully replicated much of Zoorob's results, but I found discrepancies in the fentanyl exposure coefficients and the total death estimates for each model. My replication finds that the total death estimates are approximately 13% and 16% larger for each model and that the regression coefficients on fentanyl are slightly larger than those published. In addition to replicating Zoorob’s work, this paper provides a Rubin causal model table to better understand the model framework, focusing on explaining the ordinary least-squares model. Next, the bulk of the extension investigates alternative definitions of fentanyl exposure while keeping all of Zoorob’s other modeling choices the same. The original paper's definition of fentanyl exposure explains more variation in age-adjusted mortality rates than those proposed in the extension. This finding is important because many different methods of defining fentanyl exposure exist, however, the proposed alternative definitions in this extension do not appear to improve Zoorob's model.
-
 ### Introduction
 
-|z    Fentanyl, a synthetic opioid 100 times more potent than morphine, is responsible for as much as two-thirds of the 46,802 overdose deaths in the United States in 2018 (@fentanyl). However, the opioid epidemic does not affect the country equally, as eastern and northeastern states experience more overdose deaths and drug seizures than states west of the Mississippi River (@Paper). Zoorob uses NFLIS forensic drug seizure data and age-adjusted mortality rate data^[Zoorob obtained the data used for his analysis through a Freedom of Information Act request. The data consist of state test results for drug seizures between 2011 and 2016, which he filters for test results containing fentanyl. Zoorob also uses age-adjusted mortality data from the National Center for Health Statistics. All the data used contain state and year information, and he uses state-annual populations to calculate mortality rates relative to a state's population in a particular year. The data and code that Zoorob used in his paper are available on the [Harvard Dataverse](https://doi.org/10.7910/DVN/8FWVFK)] from state-years between 2011 and 2017 to estimate fentanyl overdose mortality rates in two models: an ordinary least-squares model and a two-stage least-squares model. Zoorob finds that longitude is highly predictive of fentanyl exposure and uses longitude as the instrumental variable in his second model. Zoorob estimates the causal effect of fentanyl exposure on mortality rates to be about 4.5 and 5.4 for each model respectively, interpreted as the difference in the effect of fentanyl exposure between two state-years that differ from each other by one standard deviation. Zoorob also provides estimates of mortality deaths for each year, which are broadly consistent with official mortality statistics. 
+|    Fentanyl, a synthetic opioid 100 times more potent than morphine, is responsible for as much as two-thirds of the 46,802 overdose deaths in the United States in 2018 (@fentanyl). However, the opioid epidemic does not affect the country equally, as eastern and northeastern states experience more overdose deaths and drug seizures than states west of the Mississippi River (@Paper). Zoorob uses NFLIS forensic drug seizure data and age-adjusted mortality rate data^[Zoorob obtained the data used for his analysis through a Freedom of Information Act request. The data consist of state test results for drug seizures between 2011 and 2016, which he filters for test results containing fentanyl. Zoorob also uses age-adjusted mortality data from the National Center for Health Statistics. All the data used contain state and year information, and he uses state-annual populations to calculate mortality rates relative to a state's population in a particular year. The data and code that Zoorob used in his paper are available on the [Harvard Dataverse](https://doi.org/10.7910/DVN/8FWVFK)] from state-years between 2011 and 2017 to estimate fentanyl overdose mortality rates in two models: an ordinary least-squares model and a two-stage least-squares model. Zoorob finds that longitude is highly predictive of fentanyl exposure and uses longitude as the instrumental variable in his second model. Zoorob estimates the causal effect of fentanyl exposure on mortality rates to be about 4.5 and 5.4 for each model respectively, interpreted as the difference in the effect of fentanyl exposure between two state-years that differ from each other by one standard deviation. Zoorob also provides estimates of mortality deaths for each year, which are broadly consistent with official mortality statistics. 
 
 |    Each of the models predicts overdose mortality as a function of a variable he calls fentanyl exposure. Zoorob defines fentanyl exposure by taking into account the state, year, an error term, and the natural logarithm of the number of seizure tests containing fentanyl (plus 1 to avoid an undefined logarithm of zero). Zoorob also divides by a state's population to generate a measure that allows comparisons across different states: 
 
@@ -260,10 +258,10 @@ knitr::include_graphics("images/table2.png")
 ```
 
 
-|    Zoorob's Model 1 estimates 85,874 total overdose deaths, while my replication estimates 96,969, approximately 13% higher. Likewise, for Model 2, his estimates total to 101,246, whereas mine total to 117,079, nearly 16% higher. The author confirmed slightly different models likely provided the published estimates than the ones included in the replication materials. In addition to the higher death estimates, my estimates for the coefficient on fentanyl exposure are slightly higher than Zoorob's for both models, which might explain why my estimated deaths are also higher. My estimates are shown below.
+|    Zoorob's Model 1 estimates 85,874 total overdose deaths, while my replication estimates 96,969, approximately 13% higher. Likewise, for Model 2, his estimates total to 101,246, whereas mine total to 117,079, nearly 16% higher. The author confirmed slightly different models likely provided the published estimates than the ones included in the replication materials. In addition to the higher death estimates, my estimates for the coefficient on fentanyl exposure are slightly higher than Zoorob's for both models, which might explain why my estimated deaths are also higher. My corrected estimates are shown below.
 
 
-```{r tables 2a 2b, echo=FALSE, include=FALSE}
+```{r tables 2a 2b, echo=FALSE, include=FALSE, comment=NA}
 # Zoorob code for table 2a and 2b.
 
 ### IV AND MARGINALS
@@ -280,7 +278,7 @@ minst2 = felm(age_adjusted_rate ~ fent_r | ST+year | 0 | ST+year,
 presod_f$fenteffect = presod_f$fent_r*summary(minst2)$coefficients[1]
 ```
 
-```{r begin table 2 original, results='asis', fig.pos="H", fig.cap="Corrected Table 2 results. The OLS Model 1 is represented by fentr and the 2SLS Model 2 by fent_r(fit).", comment=NA}
+```{r begin table 2 original, results='asis', fig.pos="H", fig.cap="Corrected Table 2 results. The OLS Model 1 is represented by fentr and the 2SLS Model 2 by fent_r(fit).", comment=NA,cache.comments=NA, message=FALSE}
 #################################### TABLE 2
 stargazer(minst2, minst1, type = 'latex', header = FALSE)
 
@@ -452,7 +450,7 @@ gt::gt() %>%
 
 and run his same analyses. Zoorob's regression includes population weights and information already, so the first equation considers the choice of using $P_{ij}$ to define fentanyl exposure. The second definition only takes the log of population, since populations are large compared to the number of fentanyl drug seizures. The third definition is similar to Zoorob's but instead takes the log separately for both values, $S_{ij}$ and $P_{ij}$. The goal of this component of the extension is to see how different assumptions in defining fentanyl exposure affect the model results and to see if the original conclusions are robust to reasonable changes in the model.
 
-### Tables
+|    Nearly all of the extension results either produced drastically larger estimates or drastically smaller estimates for Table 2 of Zoorob's analyses. Zoorob's Table 2 calculated by using the first definition of fentanyl exposure is shown below.
 
 ```{r}
 presod_f <- presod_f %>% 
@@ -462,7 +460,7 @@ presod_f <- presod_f %>%
 ```
 
 
-```{r ext 1 table 1, results='asis', comment=NA, fig.pos="H"}
+```{r ext 1 table 1, results='asis', comment=NA, fig.pos="H",eval=FALSE}
 ############ FENTANYL EXPOSURE 2017
 stargazer(lm(ext1~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2013,]), 
           lm(ext1~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2014,]), 
@@ -540,12 +538,16 @@ xtable::xtable(round(meff[,3:4]), digits=0)
 options(xtable.comment = FALSE)
 ```
 
+|    Zoorob's fentanyl coefficient estimates in the corrected table for Models 1 and 2 are 4.508 and 5.443, expressing the difference in the effect of fentanyl between two state-years. The estimates from the extension are 2.380 and 5.549, 0.022 and 0.060, and 39.298 and 84.072 for each definition respectively. These coefficients on a state's fentanyl exposure changed considerably to reasonable changes in the definition of fentanyl exposure, and yield either unrealistic or impossible estimated deaths. The ordinary least squares estimated fentanyl deaths from extensions 1 and 3, total to 234,037 and 238,812 respectively, much larger than Zoorob's corrected estimates, which total to 96,969 deaths. Zoorob's corrected 2016 estimate, 26,491 deaths, is also more consistent with the official mortality statistic of 19,400 than either of the extension estimates: 46,641, 5,732, and 47,610 respectively. Estimates from extensions 1 and 3 appear to be too high, and estimates from extension 2 appear to be too low to be consistent with official mortality statistics. 
+
+|    We might also compare the results of this extension using the R^2^ values of each regression. In this case, Zoorob's corrected table's R^2^ of 9.14 and .908 respectively suggest that the original definition and model can explain more variation in overdose mortality than the proposed extensions, which all yielded R^2^ values below, and in some cases extremely below, 0.9. Zoorob's method of defining fentanyl exposure appears to explain more of the variation in mortality rate than any of the extensions. The proposed extensions do not appear to improve the model or predict a more accurate estimate of fentanyl exposure deaths; however, they do suggest that Zoorob's conclusions might not be robust to reasonable changes in the model. 
+
+
 
 ### Conclusion
 
-|    My ordinary least squares estimated fentanyl deaths from extensions 1 and 3, totaling to 234,037 and 238,812 respectively, are much larger than Zoorob's corrected estimates, totaling to 96,969. Zoorob's corrected 2016 estimate, 26,491 deaths, is also more consistent with the official mortality statistic of 19,400 than either of the extension estimates: 46,641, 5,732, and 47,610 respectively. Estimates from extensions 1 and 3 appear to be too high, and estimates from extension 2 appear to be too low to be consistent with official mortality statistics. 
+Zoorob's estimates are more consistent with mortality statistics and can better explain the variation in overdose rates than any of the proposed extensions. The estimates in the extensions were either unrealistically low or impossibly high. This exercise of modifying the definition of fentanyl exposure exhibits the level of precision needed to use this measure and the specific way the state seizure data can be modified to understand the opioid epidemic and the recent fentanyl shock. While the impossibility of some of the estimates in this extension might appear to imply that his conclusions are not robust to reasonable changes in the model, this seems to point more broadly to the importance of acknowledging the role of illicit drug supply and drug environments in the fentanyl shock and opioid epidemic. Although Zoorob's conclusions are partly limited due to a lack of forensic testing and a lack of official fentanyl mortality data, they point to the significance of bringing variables like geography and a state's drug environment into the conversation about the opioid epidemic. Further exploration using Zoorob's methods can inform policymakers and help them implement addiction management programs and relief systems. Although drug overdose deaths decreased in 2018, fentanyl overdose deaths are still increasing. These increases underscore the urgent need to address the opioid epidemic in the United States and the continued work required to help those affected.
 
-|    Moreover, when comparing R^2^ values for each model, Zoorob's method of defining fentanyl exposure appears to explain more of the variation in mortality rate than any of the extensions. Zoorob's R^2^ for the OLS model is 0.915, whereas those of the extensions are 0.840, 0.883, and 0.846. 
 
 \newpage
 
@@ -567,7 +569,7 @@ ggplot(presod_f, aes(x=year, 100*fentcapita, fill=tgroup)) +
 
 ##### Extension 2 
 
-```{r ext2 table 1, results='asis', comment=NA, fig.pos="H"}
+```{r ext2 table 1, results='asis', comment=NA, fig.pos="H", eval = FALSE}
 ############ FENTANYL EXPOSURE 2017
 stargazer(lm(ext2~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2013,]), 
           lm(ext2~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2014,]), 
@@ -593,7 +595,7 @@ minst2 = felm(age_adjusted_rate ~ ext2 | ST+year | 0 | ST+year,
 presod_f$fenteffect = presod_f$ext2*summary(minst2)$coefficients[1]
 ```
 
-```{r ext2 table 2a/b, results='asis', comment=NA, fig.pos="H"}
+```{r ext2 table 2a/b, results='asis', comment=NA, fig.pos="H", fig.cap="Table 2 results for extension 2. Coefficient and death estimates are drastically lower than Zoorob's."}
 #################################### TABLE 2
 stargazer(minst2, minst1, type = 'latex', header = FALSE)
 
@@ -645,9 +647,11 @@ xtable::xtable(round(meff[,3:4]), digits=0)
 options(xtable.comment = FALSE)
 ```
 
+\newpage
+
 ##### Extension 3 
 
-```{r ext3 table1, results='asis', comment=NA, fig.pos="H"}
+```{r ext3 table1, results='asis', comment=NA, fig.pos="H",eval=FALSE}
 ############ FENTANYL EXPOSURE 2017
 stargazer(lm(ext3~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2013,]), 
           lm(ext3~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2014,]), 
@@ -672,7 +676,7 @@ minst2 = felm(age_adjusted_rate ~ ext3 | ST+year | 0 | ST+year,
 presod_f$fenteffect = presod_f$ext3*summary(minst2)$coefficients[1]
 ```
 
-```{r ext3 table 2, results='asis', comment=NA, fig.pos="H"}
+```{r ext3 table 2, results='asis', comment=NA, fig.pos="H", fig.cap="Table 2 results for extension definition 3. Estimates are drastically higher than Zoorob's."}
 #################################### TABLE 2
 stargazer(minst2, minst1, type = 'latex', header = FALSE)
 
