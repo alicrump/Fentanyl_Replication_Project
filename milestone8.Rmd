@@ -1,9 +1,12 @@
 ---
-title: "Milestone 8"
+title: "Defining the Illicit Fentanyl Drug Supply: A Replication and Extension of Zoorob (2019)"
 author: "Ali Crump"
-date: "4/24/2020"
+date: "5/11/2020"
 output:
-  pdf_document: default
+  bookdown::pdf_document2:
+      keep_tex: true
+      toc: False
+      number_sections: False
   link_citations: yes
 bibliography: bibliography.bib
 ---
@@ -20,15 +23,18 @@ library(lfe)
 library(stargazer)
 library(geofacet)
 library(gtable)
+library(kableExtra)
 ```
 
 ### Abstract
 
-Zoorob (2019) shows that geography and fentanyl exposure explain much of the variation in increased overdose mortality rates between 2011 and 2017. I successfully replicated much of Zoorob's results, but I found discrepancies in the fentanyl exposure coefficients and the total death estimates for each model. My replication finds that the total death estimates are approximately 13% and 16% larger for each model and that the regression coefficients on fentanyl are slightly larger than those published. In addition to replicating Zoorob’s work, this paper uses alternate definitions of fentanyl exposure and displays a range of uncertainty in the total estimated deaths while keeping all the other modeling choices the same. The focus of the extension is on Zoorob's ordinary least squares model and I find that the original paper's definition of fentanyl exposure explains more variation in age-adjusted mortality rates than those proposed in the extension. This finding is important because there are many ways to define fentanyl exposure, but Zoorob's appears to be closer.
+|  Zoorob (2019) shows that geography and fentanyl exposure explain much of the variation in increased overdose mortality rates between 2011 and 2017. I successfully replicated much of Zoorob's results, but I found discrepancies in the fentanyl exposure coefficients and the total death estimates for each model. My replication finds that the total death estimates are approximately 13% and 16% larger for each model and that the regression coefficients on fentanyl are slightly larger than those published. In addition to replicating Zoorob’s work, this paper provides a Rubin causal model table to better understand the model framework, focusing on explaining the ordinary least-squares model. Next, the bulk of the extension investigates alternative definitions of fentanyl exposure while keeping all of Zoorob’s other modeling choices the same. The original paper's definition of fentanyl exposure explains more variation in age-adjusted mortality rates than those proposed in the extension. This finding is important because many different methods of defining fentanyl exposure exist, however, the proposed alternative definitions in this extension do not appear to improve Zoorob's model.
 
 ### Introduction
 
-Zoorob (2019) uses two models; Model 1 shows that fentanyl exposure has a positive association with mortality rates, and Model 2 tries to estimate the causal effect of fentanyl exposure on mortality rates. Zoorob runs a least squares regression for the first model. The model predicts overdose mortality as a function of fentanyl exposure. Fentanyl exposure takes into account the state, year, an error term, and the natural logarithm of the number of test results containing fentanyl:
+|z    Fentanyl, a synthetic opioid 100 times more potent than morphine, is responsible for as much as two-thirds of the 46,802 overdose deaths in the United States in 2018 (@fentanyl). However, the opioid epidemic does not affect the country equally, as eastern and northeastern states experience more overdose deaths and drug seizures than states west of the Mississippi River (@Paper). Zoorob uses NFLIS forensic drug seizure data and age-adjusted mortality rate data^[Zoorob obtained the data used for his analysis through a Freedom of Information Act request. The data consist of state test results for drug seizures between 2011 and 2016, which he filters for test results containing fentanyl. Zoorob also uses age-adjusted mortality data from the National Center for Health Statistics. All the data used contain state and year information, and he uses state-annual populations to calculate mortality rates relative to a state's population in a particular year. The data and code that Zoorob used in his paper are available on the [Harvard Dataverse](https://doi.org/10.7910/DVN/8FWVFK)] from state-years between 2011 and 2017 to estimate fentanyl overdose mortality rates in two models: an ordinary least-squares model and a two-stage least-squares model. Zoorob finds that longitude is highly predictive of fentanyl exposure and uses longitude as the instrumental variable in his second model. Zoorob estimates the causal effect of fentanyl exposure on mortality rates to be about 4.5 and 5.4 for each model respectively, interpreted as the difference in the effect of fentanyl exposure between two state-years that differ from each other by one standard deviation. Zoorob also provides estimates of mortality deaths for each year, which are broadly consistent with official mortality statistics. 
+
+|    Each of the models predicts overdose mortality as a function of a variable he calls fentanyl exposure. Zoorob defines fentanyl exposure by taking into account the state, year, an error term, and the natural logarithm of the number of seizure tests containing fentanyl (plus 1 to avoid an undefined logarithm of zero). Zoorob also divides by a state's population to generate a measure that allows comparisons across different states: 
 
 \begin{center}
 
@@ -36,7 +42,7 @@ $Fentanyl_{ij} = \log{(\frac{S_{ij}}{P_{ij}} + 1)}$
 
 \end{center}
 
-Model 1 below is an ordinary least squares equation where $\alpha_{i}$ is state $i$ and $\eta_{j}$ is year $j$ The standard errors are two-way clustered by state and year and includes population weights (@Paper).
+|    Model 1 below is an ordinary least squares equation where $\alpha_{i}$ is state $i$ and $\eta_{j}$ is year $j$ The standard errors are two-way clustered by state and year and include population weights (@Paper).
 
 \begin{center}
 
@@ -44,7 +50,7 @@ $Overdose_{ij} = \alpha_{i} + \eta_{j} + \beta_{1}Fentanyl_{ij} + \epsilon_{ij}$
 
 \end{center}
 
-The second model uses a two-stage least squares regression:
+The second model uses a two-stage least squares regression with longitude as the instrument variable:
 
 \begin{center}
 
@@ -52,24 +58,23 @@ $\widehat{Fentanyl_{ij}} = \alpha_{i} + \eta_{j} + \beta_{1}(Longitude_{i}\cdot 
 
 \end{center}
 
-Findings in the paper show that much of the variation in the increased overdose mortality is explained by fentanyl exposure, and that fentanyl deaths are highly correlated with geography, as the epicenter of the overdose crisis has shifted towards the eastern U.S. Zoorob also found that longitude is better able to explain levels of overdose mortality over time. States east of the Mississippi River tend to have greater fentanyl exposure and sharper increases in overdose deaths than states west of the Mississippi River (@Paper). Zoorob also uses both models to estimate the number or overdose deaths attributable to fentanyl and claims that they are broadly consistent with official mortality statistics.  
+|    Findings in the paper show that much of the variation in the increased overdose mortality rates is explained by fentanyl exposure, getting stronger over time. Zoorob's analysis of police fentanyl seizures sheds light on the illegal drug supply and drug environments in the United States, showing that illicitly manufactured fentanyl contributed to the worsening overdose crisis. Zoorob determines that the drug supply is shaping the epicenter of the overdose crisis, for the epicenter shifted towards the eastern U.S., and states east of the Mississippi River tend to have greater fentanyl exposure and sharper increases in overdose deaths than states west of the Mississippi River. 
 
-Zoorob obtained the data used for his analysis through a Freedom of Information Act request. The data consist of state test results for drug seizures between 2011 and 2016, which he filters for test results containing fentanyl. Zoorob also uses age-adjusted mortality data from the National Center for Health Statistics. All the data used contain state and year information, and he uses state-annual populatons to calcaulte mortality rates relative to a state's population in a particular year. The data and code that Zoorob used in his paper is available on the [Harvard Dataverse](https://doi.org/10.7910/DVN/8FWVFK). To conduct my replication, I used R. More information on this project can be found on my Github repository.^[[Github repository](https://github.com/alicrump/Fentanyl_Replication_Project)]  
+|    To conduct my replication, I used R ^[More information on this project can be found on my Github repository.^[[Github repository](https://github.com/alicrump/Fentanyl_Replication_Project)]](@R). I successfully replicated all of Zoorob's figures and one of the fentanyl exposure regression tables (Table 1); however, I was unable to replicate Table 2. The replicated total death estimates are approximately 13% and 16% larger for each model and the regression coefficients on fentanyl exposure are slightly larger than those published. The extension of the project proceeds with the model and regressions used in the corrected table.
 
-For my extension, I use an alternate definition for fentanyl exposure than that proposed by Zoorob: $Fentanyl_{ij} = \log{(\frac{S_{ij}}{P_{ij}} + 1)}$. Zoorob does not explicitly explain the decision to define fentanyl exposure using a log transformation other than he aims to create a measure that is comparable across different states and different years @Paper. He uses population weights in his regression analyses so I propose alternative definitions that do not use the state populations. I also test other definitions that do not use log transformations for all of the variables.
+|    The goals of this extension are to better understand Zoorob's models and to see if alternate definitions of fentanyl exposure could improve the models. The 'Rubin Table' frames the paper, which uses topics not covered in the scope of this course, in a context any reader familiar with statistical regressions will understand. The reasoning behind the second facet of the extension is that not just one definition of fentanyl exposure exists; one could apply seizure data to quantify a state's drug environment using other methods. Using three alternative definitions that seem reasonable, I conduct Zoorob's same analyses. He incorporates population weights in his regression analyses, so I examine a definition that does not use the state populations. I also test other plausible definitions that perform log transformations before dividing by state populations.
 
-Zoorob's method for measuring fentanyl exposure is the closest to official mortality statistics and explains more variation in mortality rates than the alternate definitions of fentanyl exposure. 
+|    The back-of-the-envelope calculations from two of the alternative definitions are wildly unrealistic, estimating nearly a quarter of a million deaths up to as many as half a million deaths due to fentanyl between 2011 and 2017. Fentanyl only represents a portion of synthetic opioid deaths; even if fentanyl accounted for every single overdose death, official mortality statistics report 360,242 total overdose deaths, making these larger estimates impossible (@databrief). In contrast, the other definition used in the extension estimates total deaths approximately 80% smaller and 53% than Zoorob's models, respectively. Since official fentanyl overdose death numbers remain unknown, these estimates are not impossible, however, they are likely too extreme. Consistent with these extreme estimates, comparing R^2^ values for each of the models strongly suggests that Zoorob's method for measuring fentanyl exposure explains more variation in mortality rates than the alternate definitions of fentanyl exposure and that his method is more feasible. 
 
 ### Literature Review
 
 
-The number of drug overdose deaths in the United states has rapidly increased since 2014. However, the opiod epidemic did not affect all regions of the U.S. equally; according to the CDC, almost all states west of the Mississippi River did not see an increase while those to the west did. While Dasgupta et. al argue social and economic factors play a role in one's susceptibility to opiod addiction and overdose, Zoorob claims that the geographical patterns point to drug supply also playing a primary role in the epidemic.
-
-Research by Barocas et al. on the effect of opiod use among patients with endocarditis cites Zoorob's paper and also finds a decreased risk of overdose associated with the West and South compared to the Northeast (@endocarditis).
-Although in 2018, drug overdose deaths actually decreased by 4.6% from 2017 in the United States, fentanyl deaths continued to rise (@CDC)(@NYT). (Still looking for literature on this)
+|    The number of drug overdose deaths in the United States has rapidly increased since 2014. However, the opioid epidemic did not affect all regions of the U.S. equally; according to the CDC, almost all states west of the Mississippi River did not see an increase while those to the east did. Similar work to Zoorob's by Rigg et al. (2018) investigates the role of geography in opioid-related mortalities. Rigg et al. find that the opioid epidemic in the United States is not disproportionately rural and that the epidemic varies greatly across different rural areas (@Rigg). Also, research by Barocas et al. on the effect of opioid use among patients with endocarditis also cites Zoorob's work. Barocas et al. find a decreased risk of overdose associated with the West and South compared to the Northeast, consistent with Zoorob's conclusions (@endocarditis). Other authors' claims are consistent with Zoorobs; for example, research by Pearce et. al (2020) and Gladden et al. (2019) cite Zoorob's claim that the drug supply is contributing to the overdose crisis in their work (@Pearce)(@gladden). However, other work such as that of Dasgupta et. al (2018) argues social and economic factors play a role in one's susceptibility to opioid addiction and overdose, whereas Zoorob claims that the geographical patterns point to drug supply also playing a primary role in the epidemic. Surprisingly, drug overdose deaths decreased in 2018 by 4.6% from 2017 in the United States, however, fentanyl deaths continued to rise (@CDC)(@NYT). The amount of unknowns and variation in the opioid epidemic coupled with this unexpected change in 2018 shows that more testing, data, and further work are required to better understand the overdose crisis and the impact of synthetic opioids like fentanyl. 
 
 
 ```{r read in data, cache=TRUE}
+## Read in data from data.prep file.
+
 fent2017nflis <- read_rds("data/fent2017nflis.rds")
 FOIA11_16 <- read_rds("data/FOIA11_16.rds")
 FOIA11_16_State <- read_rds("data/FOIA11_16_State.rds")
@@ -80,7 +85,11 @@ poison_multiple <- read_rds("data/poison_multiple.rds")
 
 ```
 
-```{r}
+```{r zoorob}
+# Original code from Zoorob. Filtering for tests containing fentanyl.
+# Calculating sums of fentanyl tests and new time variables.
+# Counting reports containing fentanyl and caculating proportions.
+
 d = unique(c(
   unique(FOIA11_16$subst1)[grep("fentanyl|Fentanyl|FENTANYL",
                             unique(FOIA11_16$subst1))],
@@ -120,7 +129,10 @@ overdose$age_adjusted_rate = NULL
 ```
 
 
-```{r, include = FALSE, echo = FALSE}
+```{r zoorob code, include = FALSE, echo = FALSE}
+# Original code from Zoorob. Summarizing the fentanyl test sums
+# and combining the 2011-2016 data with the 2017 nflis data.
+
 ############### PLOTS
 ############ FIGURE 1
 
@@ -155,6 +167,11 @@ heroin[is.na(heroin$ST), "ST"] = "DC"
 
 
 ```{r}
+# Original code from Zoorob. Essentially merging all data into one tibble which
+# includes fentanyl test data, age-adjusted mortality data, longitude and latitude 
+# data. Calculates fentanyl exposure and other values like fentanyl tests per 
+# capita. Designates states that are east of the Mississippi and west.
+
 ## geo facet - fent count year
 
 fentstateyear_m = rbind(fentstateyear, fentstateyear2)
@@ -234,17 +251,21 @@ presod_f$perheroin = presod_f$propheroin*100
 
 ### Replication  
 
-The replication was partially successful. I successfully replicated figures 1, 2, 3, 4, and table 1 from the paper as well figures from the appendix. As an example, Figure 1 is shown in the appendix. However, I was unable to replicate the results from table 2, the parameters of the statistical models of overdose and fentanyl exposure using the ordinary least squares model (Model 1) and the second state of a two-stage least squares model (Model 2). The results for table 2 from the original paper and my replication are shown below:
+|    The replication was partially successful. I successfully replicated Figures 1, 2, 3, 4, and Table 1 from the paper as well as figures from the appendix. As an example, Figure 1 is shown in the appendix. However, I was unable to replicate the results from Table 2, which include the parameters of the statistical models for overdose and fentanyl exposure for both the least-squares model (Model 1) and the second stage of a two-stage least squares model (Model 2). The results for table 2 from the original paper and my replication are shown below:
 
-![](images/table2.png)
-\begin{center}
-Zoorob (2019) Table 2 Results.
-\end{center}
+```{r, fig.cap="Zoorob (2019) Table 2", fig.align='center', dpi = 300, comment=NA}
+# Including the screenshot using bookdown.
 
-His model 1 death esimates were 85,874, while my estimates total to 96,969, approximately 13% higher than his. Likewise, for model 2, his estimates total to 101,246, whereas mine total to 117,079, nearly 16% higher. These differenes suggest Zoorob used a different model than the ones included in the replication materials. My estimates for the coefficient on fentanyl exposure are slightly higher than Zoorob's for both models, which might explain why my estimated deaths are also higher. My estimates are shown below.
+knitr::include_graphics("images/table2.png")
+```
+
+
+|    Zoorob's Model 1 estimates 85,874 total overdose deaths, while my replication estimates 96,969, approximately 13% higher. Likewise, for Model 2, his estimates total to 101,246, whereas mine total to 117,079, nearly 16% higher. The author confirmed slightly different models likely provided the published estimates than the ones included in the replication materials. In addition to the higher death estimates, my estimates for the coefficient on fentanyl exposure are slightly higher than Zoorob's for both models, which might explain why my estimated deaths are also higher. My estimates are shown below.
 
 
 ```{r tables 2a 2b, echo=FALSE, include=FALSE}
+# Zoorob code for table 2a and 2b.
+
 ### IV AND MARGINALS
 minst1 = felm(age_adjusted_rate ~ 1 | ST+year | (fent_r~longitude:year) | ST+year, 
               data=presod_f, weights=presod_f$population)
@@ -259,7 +280,7 @@ minst2 = felm(age_adjusted_rate ~ fent_r | ST+year | 0 | ST+year,
 presod_f$fenteffect = presod_f$fent_r*summary(minst2)$coefficients[1]
 ```
 
-```{r begin table 2 original, results='asis'}
+```{r begin table 2 original, results='asis', fig.pos="H", fig.cap="Corrected Table 2 results. The OLS Model 1 is represented by fentr and the 2SLS Model 2 by fent_r(fit).", comment=NA}
 #################################### TABLE 2
 stargazer(minst2, minst1, type = 'latex', header = FALSE)
 
@@ -307,13 +328,9 @@ colnames(meff) = c("OLS", "2SLS", "Model 1 Deaths", "Model 2 Deaths")
 
 # xtable::xtable(meff)
 xtable::xtable(round(meff[,3:4]), digits=0)
+options(table.comment = FALSE)
 ```
 
-\begin{center}
-
-Replication results for Table 2. The OLS Model 1 is represented by fentr and the 2SLS Model 2 by fent_r(fit).
-
-\end{center}
 
 ```{r table a1 appendix, results='asis', include=FALSE, echo=FALSE}
 ################################## TABLE 2 ROBUSTNESS CHECK (omitting Alaska and Hawaii
@@ -367,7 +384,7 @@ for(y in sort(unique(presod_f$year))) {
 ```
 
 
-```{r table 1, results='asis'}
+```{r table 1, results='asis', fig.pos="H", fig.cap="Table 1", include=FALSE, echo=FALSE}
 ################################## TABLE 1
 
 ############ FENTANYL EXPOSURE 2017
@@ -384,55 +401,56 @@ stargazer(lm(fent_r~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2
 ```
 
 
-```{r figures 2a 2b, fig.width=12,fig.height=8,dpi=300, include=FALSE}
-## begin figure 2a and figure 2b paper
-############################# BEGIN FIGURE 2
-
-#### state OD year
-ggplot(presod_f, aes(x=year, age_adjusted_rate, fill=tgroup)) + geom_col() + xlab("") +
-  ylab("Age-Adjusted Mortality \n") + facet_geo(~state, scales="fixed") +
-  ggtitle("\n Trend in Overdose Mortality (2011-2016) \n") +
-  theme_bw() + theme(legend.position = "", plot.title = element_text(size=28),  axis.text = element_text(size=7))+
-  labs(caption = "Source: CDC WONDER") 
-#ggsave("Figures/Figure3/odyear.png", width=12, height=8, units="in", dpi=300)
-
-# REGIONALITY OF Changing overdose
-ggplot(presod_f, aes(x=year, y=MORT_DIFF_11, fill=(tgroup))) + geom_col() +
-  xlab("") + ylab("Change in OD Mortality (compared with 2011) \n") +
-  facet_geo(~state, scales="fixed") +
-  ggtitle("\n Regionality of Changing Overdose Mortality \n") +
-  theme_bw()  + theme(legend.position = "", plot.title = element_text(size=28), axis.text = element_text(size=7))
-#ggsave("Figures/Figure3/regionality_deltaod_17.png", width=12, height=8, units="in", dpi=300)
-
-############################# END FIGURE 2
-```
-
-```{r figure 3, fig.width=12, fig.height=8, dpi=300, units="in", include=FALSE}
-############################# FIGURE 3
-
-# annual plot
-ggplot(presod_f[presod_f$year>2011 ,],
-       aes(x=fent_r, y=(age_adjusted_rate), color=tgroup)) +
-  geom_text(aes(label=ST),hjust=0.0, vjust=0, size=3)+
-  geom_smooth(method="lm", se=FALSE, alpha=0.4, color="Black") + xlab("Log(Fentanyl Seizures Per 100k)") +
-  ylab("Age-Adjusted Overdose Mortality") + facet_wrap(~year, scales="fixed") +
-  ggtitle("Fentanyl, Geography, & Overdose Mortality (2012-2017)") +
-  theme_bw(base_size = 14) + theme(legend.position = "", plot.title = element_text(size=22),
-                     axis.text = element_text(size=11)) #+ labs(caption = "Source: NFLIS/CDC")
-#ggsave("Figures/Figure4/fentseizures_od_l_capita_linear_17.png", width=12, height=8, units="in", dpi=300)
-```
-
-
-
 ### Extension  
 
-Zoorob defines a measure of fentanyl exposure as $Fentanyl_{ij} = \log{(\frac{S_{ij}}{P_{ij}} + 1)}$. He uses this measure of fentanyl exposure in his regression for both models 1 and 2. Zoorob mentions that he uses this measure to compare fentanyl exposure across states of highly variable populations, and that the plus 1 avoids and undefined logarithm of zero. However, he does not provide any further explanation as to why he chose to define fentanyl exposure this way. For my extension, I define fentanyl exposure several ways: 
+|    For my extension, I started by understanding the model using the framework of potential outcomes. Unlike more straightforward Rubin causal models with binary treatments, fentanyl exposure can theoretically take on any positive value. In the Rubin Causal Table below, the units are state-years for every state in the U.S. and for every year from 2011 to 2017. Fentanyl exposure represents the state's fentanyl exposure measured using seizure and population data. The table arbitrarily looks at the interval of fentanyl exposure from 2.0 to 2.6 for simplicity, but theoretically fentanyl exposure ranges from 0 to infinity. The values in the table for a particular state, year, and fentanyl exposure represent the overdose mortality rate in that state and year. Every state-year can only experience one level of fentanyl exposure, the fundamental problem of causal inference. Therefore, for every other fentanyl exposure level the state did not experience, the mortality rate is represented by a question mark; a state-year cannot experience more than one level of fentanyl exposure, so those mortality rates are unobservable unknown values. One works around this problem by using other states' mortality rates to fill in the question marks. 
+
+\newpage
+
+```{r rubin, fig.align='center',fig.height=20, fig.width=14, fig.pos="H"}
+rubin <- tibble(
+  Unit = c("Alabama","Alaska","Arizona","Arkansas","...","Alabama","...","Wyoming"),
+  Year = c(2011,2011,2011,2011,"...",2012,"...",2017),
+  f2.0 = c("?","?","1.3","?","...","?","...","?"),
+  f2.1 = c("?","?","?","?","...","?","...","2.0"),
+  f2.2 = c("?","?","?","3.1","...","?","...","?"),
+  f2.3 = c("4.7","?","?","?","...","?","...","?"),
+  f2.4 = c("?","?","?","?","...","?","...","?"),
+  f2.5 = c("?","?","?","?","...","5.0","...","?"),
+  f2.6 = c("?","2.9","?","?","...","?","...","?"),
+  Causal_Effect = c("?","?","?","?","...","?","...","?")
+)
+rubin %>% 
+gt::gt() %>% 
+  gt::tab_header(
+    title = "Rubin Causal Table",
+    subtitle = "Estimating Overdose Mortality Rate Using Fentanyl Exposure"
+  ) %>% 
+  gt::tab_spanner(
+    columns = vars(f2.0,f2.1,f2.2,f2.3,f2.4,f2.5,f2.6),
+    label = "Fentanyl Exposure"
+  ) %>% 
+  gt::cols_label(
+    f2.0 = "...2.0",
+    f2.1 = "2.1",
+    f2.2 = "2.2",
+    f2.3 = "2.3",
+    f2.4 = "2.4",
+    f2.5 = "2.5",
+    f2.6 = "2.6...",
+    Causal_Effect = "Causal
+    Effect"
+  )
+```
+|    For example, suppose Alabama had a fentanyl exposure of 2.4 and a mortality rate of 4.7 deaths per 100,000 people in 2011. We cannot observe what the mortality rate would have been if fentanyl exposure had been 2.0, 2.1, 2.2, etc. Instead, we use mortality rates from other states with other fentanyl exposures to "fill in the blanks." Controlling for state populations and state-fixed effects, we might predict Alabama's 2.3 fentanyl exposure mortality rate in 2011 using Arkansas' 3.1 mortality rate. Continuing this process for every "question mark," we can compute the causal effect of a 1 unit change in fentanyl exposure. This visualization helps make these complex models more accessible.
+
+|    In the second part of the extension, I explore how Zoorob uses the NFLIS state seizure data to define a measure of fentanyl exposure, $Fentanyl_{ij} = \log{(\frac{S_{ij}}{P_{ij}} + 1)}$. In essence, fentanyl exposure is a measure of a state's fentanyl drug supply in a particular year, controlling for population sizes and other fixed effects. He uses this measure of fentanyl exposure in his regression for both Models 1 and Model 2. Zoorob explains that he uses this measure to compare fentanyl exposure across states of highly variable populations, and that the plus 1 avoids and undefined logarithm of zero. However, the decision to transform the variables in this manner remains partially unclear. For my extension, I define fentanyl exposure several ways: 
 
 1. $Fentanyl_{ij} = \log{(S_{ij} + 1)}$
 2. $Fentanyl_{ij} = \frac{S_{ij}}{\log{(P_{ij} + 1)}} + 1$
 3. $Fentanyl_{ij} = \frac{\log{({S_{ij}} + 1)}}{\log{(P_{ij})}}$
 
-and run his same analyses. Zoorob's regression includes population weights and information already, so the first equation challenges the choice of using $P_{ij}$ to define fentanyl exposure. The second definition only takes the log of population, since populations are large compared to the number of fentanyl drug seizures. The third definition is similar to Zoorob's, but instead takes the log separately for both values, $S_{ij}$ and $P_{ij}$. The goal of this extension is to see if a different definition of fentanyl exposure is closer to official mortality statistics and is a more reasonable choice.
+and run his same analyses. Zoorob's regression includes population weights and information already, so the first equation considers the choice of using $P_{ij}$ to define fentanyl exposure. The second definition only takes the log of population, since populations are large compared to the number of fentanyl drug seizures. The third definition is similar to Zoorob's but instead takes the log separately for both values, $S_{ij}$ and $P_{ij}$. The goal of this component of the extension is to see how different assumptions in defining fentanyl exposure affect the model results and to see if the original conclusions are robust to reasonable changes in the model.
 
 ### Tables
 
@@ -443,9 +461,8 @@ presod_f <- presod_f %>%
   mutate(ext3 = log(sumfent + 1)/log(population + 1))
 ```
 
-##### Extension 1 
 
-```{r ext 1 table 1, results='asis', comment=NA}
+```{r ext 1 table 1, results='asis', comment=NA, fig.pos="H"}
 ############ FENTANYL EXPOSURE 2017
 stargazer(lm(ext1~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2013,]), 
           lm(ext1~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2014,]), 
@@ -456,7 +473,7 @@ stargazer(lm(ext1~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==201
           header = FALSE)  
 ```
 
-```{r ext 1 table 2 models, echo=FALSE, include=FALSE, comment=NA}
+```{r ext 1 table 2 models, echo=FALSE, include=FALSE, comment=NA, fig.pos="H"}
 ### IV AND MARGINALS
 minst1 = felm(age_adjusted_rate ~ 1 | ST+year | (ext1~longitude:year) | ST+year, 
               data=presod_f, weights=presod_f$population)
@@ -471,7 +488,7 @@ minst2 = felm(age_adjusted_rate ~ ext1 | ST+year | 0 | ST+year,
 presod_f$fenteffect = presod_f$ext1*summary(minst2)$coefficients[1]
 ```
 
-```{r ext 1 table 2a/b, results='asis', comment=NA}
+```{r ext 1 table 2a/b, results='asis', comment=NA, fig.pos="H"}
 #################################### TABLE 2
 stargazer(minst2, minst1, type = 'latex', header = FALSE)
 
@@ -523,9 +540,34 @@ xtable::xtable(round(meff[,3:4]), digits=0)
 options(xtable.comment = FALSE)
 ```
 
+
+### Conclusion
+
+|    My ordinary least squares estimated fentanyl deaths from extensions 1 and 3, totaling to 234,037 and 238,812 respectively, are much larger than Zoorob's corrected estimates, totaling to 96,969. Zoorob's corrected 2016 estimate, 26,491 deaths, is also more consistent with the official mortality statistic of 19,400 than either of the extension estimates: 46,641, 5,732, and 47,610 respectively. Estimates from extensions 1 and 3 appear to be too high, and estimates from extension 2 appear to be too low to be consistent with official mortality statistics. 
+
+|    Moreover, when comparing R^2^ values for each model, Zoorob's method of defining fentanyl exposure appears to explain more of the variation in mortality rate than any of the extensions. Zoorob's R^2^ for the OLS model is 0.915, whereas those of the extensions are 0.840, 0.883, and 0.846. 
+
+\newpage
+
+### Appendix  
+
+```{r figure 1,fig.height=8, fig.width=12, dpi=300, fig.pos="H"}
+############################## FIGURE 2
+ggplot(presod_f, aes(x=year, 100*fentcapita, fill=tgroup)) + 
+  geom_col() + 
+  xlab("") +
+  ylab("Fentanyl/Analogues per 100k \n") + 
+  facet_geo(~state, scales="fixed") +
+  theme_bw() + 
+  theme(legend.position = "", plot.title = element_text(size=28), axis.text = element_text(size=7)) +
+  labs(caption = "Source: National Forensic Laboratory Information System (NFLIS)") +
+  ggtitle("\n Drug Seizures with Fentanyl (2011-2017) \n") 
+# ggsave("Figures/Figure2/figure2_fentcapita_17.png", width=12, height=8, units="in", dpi=300)
+```
+
 ##### Extension 2 
 
-```{r ext2 table 1, results='asis', comment=NA}
+```{r ext2 table 1, results='asis', comment=NA, fig.pos="H"}
 ############ FENTANYL EXPOSURE 2017
 stargazer(lm(ext2~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2013,]), 
           lm(ext2~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2014,]), 
@@ -536,7 +578,7 @@ stargazer(lm(ext2~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==201
           header = FALSE)  
 ```
 
-```{r ext2 table 2 prep, echo=FALSE, include=FALSE, comment=NA}
+```{r ext2 table 2 prep, echo=FALSE, include=FALSE, comment=NA,fig.pos="H"}
 ### IV AND MARGINALS
 minst1 = felm(age_adjusted_rate ~ 1 | ST+year | (ext2~longitude:year) | ST+year, 
               data=presod_f, weights=presod_f$population)
@@ -551,7 +593,7 @@ minst2 = felm(age_adjusted_rate ~ ext2 | ST+year | 0 | ST+year,
 presod_f$fenteffect = presod_f$ext2*summary(minst2)$coefficients[1]
 ```
 
-```{r ext2 table 2a/b, results='asis', comment=NA}
+```{r ext2 table 2a/b, results='asis', comment=NA, fig.pos="H"}
 #################################### TABLE 2
 stargazer(minst2, minst1, type = 'latex', header = FALSE)
 
@@ -605,7 +647,7 @@ options(xtable.comment = FALSE)
 
 ##### Extension 3 
 
-```{r ext3 table1, results='asis', comment=NA}
+```{r ext3 table1, results='asis', comment=NA, fig.pos="H"}
 ############ FENTANYL EXPOSURE 2017
 stargazer(lm(ext3~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2013,]), 
           lm(ext3~longitude+latitude+MORT_2013, data=presod_f[presod_f$year==2014,]), 
@@ -630,7 +672,7 @@ minst2 = felm(age_adjusted_rate ~ ext3 | ST+year | 0 | ST+year,
 presod_f$fenteffect = presod_f$ext3*summary(minst2)$coefficients[1]
 ```
 
-```{r ext3 table 2, results='asis', comment=NA}
+```{r ext3 table 2, results='asis', comment=NA, fig.pos="H"}
 #################################### TABLE 2
 stargazer(minst2, minst1, type = 'latex', header = FALSE)
 
@@ -682,28 +724,8 @@ xtable::xtable(round(meff[,3:4]), digits=0)
 options(xtable.comment = FALSE)
 ```
 
-### Conclusion
-
-My ordinary least squares estimated fentanyl deaths from extensions 1 and 3, totaling to 234,037 and 238,812 respectively, are much larger than Zoorob's corrected estimates, totaling to 96,969. Zoorob's corrected 2016 estimate, 26,491 deaths, is also more consistent with the official mortality statistic of 19,400 than either of the extension estimates: 46,641, 5,732, and 47,610 respectively. Estimates from extensions 1 and 3 appear to be too high, and estimates from extension 2 appear to be too low to be consistent with official mortality statistics. 
-
-Moreover, when comparing R^2^ values for each model, Zoorob's method of defining fentanyl exposure appears to explain more of the variation in mortality rate than any of the extensions. Zoorob's R^2^ for the OLS model is 0.915, whereas those of the extensions are 0.840, 0.883, and 0.846. 
-
+\newpage
+\newpage
 \pagebreak
-
-### Appendix  
-
-```{r figure 1,fig.height=8, fig.width=12, dpi=300}
-############################## FIGURE 2
-ggplot(presod_f, aes(x=year, 100*fentcapita, fill=tgroup)) + 
-  geom_col() + 
-  xlab("") +
-  ylab("Fentanyl/Analogues per 100k \n") + 
-  facet_geo(~state, scales="fixed") +
-  theme_bw() + 
-  theme(legend.position = "", plot.title = element_text(size=28), axis.text = element_text(size=7)) +
-  labs(caption = "Source: National Forensic Laboratory Information System (NFLIS)") +
-  ggtitle("\n Drug Seizures with Fentanyl (2011-2017) \n") 
-# ggsave("Figures/Figure2/figure2_fentcapita_17.png", width=12, height=8, units="in", dpi=300)
-```
 
 ### References
